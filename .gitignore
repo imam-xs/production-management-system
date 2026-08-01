@@ -33,3 +33,7 @@
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Internal planning notes
+MANUAL-TEST.md
+TASKS.md
