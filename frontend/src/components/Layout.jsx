@@ -46,11 +46,15 @@ export default function Layout({ user, onLogout, children }) {
   const location = useLocation()
   const [lowStockCount, setLowStockCount] = useState(0)
 
+  // Raw materials only: the badge sits beside that link, so counting every
+  // stage would show a number the page it labels cannot account for.
+  // Shortages in the other stages are visible on the Dashboard.
+  //
   // Refreshed on navigation so the badge reflects the effect of whatever the
   // user just did (receiving stock, running production).
   useEffect(() => {
     api
-      .get('/inventory/low-stock')
+      .get('/inventory/low-stock?type=raw')
       .then((res) => setLowStockCount(res.data.length))
       .catch(() => {})
   }, [location.pathname])

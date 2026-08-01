@@ -13,6 +13,7 @@ use App\Repositories\Contracts\ItemRepositoryInterface;
 use App\Services\InventoryService;
 use App\Services\ItemService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -41,9 +42,20 @@ class InventoryController extends Controller
         return InventoryStockResource::collection($this->inventory->snapshot($this->resolveStage($stage)));
     }
 
-    public function lowStock(): AnonymousResourceCollection
+    /**
+     * Items at or below their reorder level, optionally narrowed to one stage.
+     *
+     * The stage filter exists so a caller can ask a question it can act on: the
+     * sidebar badge sits beside Raw Materials and must not count semi-finished
+     * or finished shortages, or its number will not match the page it labels.
+     */
+    public function lowStock(Request $request): AnonymousResourceCollection
     {
-        return ItemResource::collection($this->items->lowStock());
+        $type = $request->query('type');
+
+        return ItemResource::collection(
+            $this->items->lowStock(is_string($type) ? $this->resolveStage($type) : null),
+        );
     }
 
     /**
