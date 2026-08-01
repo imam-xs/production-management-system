@@ -9,6 +9,7 @@ use App\Enums\ProductionStage;
 use App\Events\ProductionCompleted;
 use App\Exceptions\InsufficientInventoryException;
 use App\Exceptions\InvalidProductionStageException;
+use App\Exceptions\ItemRetiredException;
 use App\Exceptions\ProductionOrderNotPendingException;
 use App\Models\Batch;
 use App\Models\Item;
@@ -101,6 +102,17 @@ class ProductionService
 
         if ($stage === null) {
             throw InvalidProductionStageException::itemIsNotProduced($outputItem);
+        }
+
+        // Retired products leave circulation for new work. Enforced here rather
+        // than only by hiding them from the UI's dropdown, so the rule holds for
+        // any client — the interface filters as a convenience, not as the guard.
+        //
+        // Deliberately scoped to the *output*: existing stock of a retired input
+        // must still be consumable, which is how a component is phased out
+        // rather than stranded.
+        if (! $outputItem->is_active) {
+            throw ItemRetiredException::cannotProduce($outputItem);
         }
 
         if (bccomp($plannedQuantity, '0', 4) <= 0) {

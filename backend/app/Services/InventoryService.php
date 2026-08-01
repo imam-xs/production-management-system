@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\BatchOrigin;
 use App\Enums\ItemType;
 use App\Enums\MovementType;
+use App\Exceptions\ItemRetiredException;
 use App\Models\Batch;
 use App\Models\InventoryMovement;
 use App\Models\Item;
@@ -47,6 +48,12 @@ class InventoryService
             throw new InvalidArgumentException(
                 "{$item->name} ({$item->sku}) is not a raw material; only raw materials are received directly.",
             );
+        }
+
+        // Same rule as production: a retired material takes no new stock. See
+        // ProductionService::createOrder().
+        if (! $item->is_active) {
+            throw ItemRetiredException::cannotReceive($item);
         }
 
         if (bccomp($quantity, '0', 4) <= 0) {
