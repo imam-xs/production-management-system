@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+# Shell scripts run inside Linux containers — CRLF would break the shebang.
+*.sh text eol=lf
+backend/docker-entrypoint.sh text eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
