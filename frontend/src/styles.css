@@ -298,6 +298,21 @@ input:focus, select:focus { outline: 2px solid rgba(37, 99, 235, 0.3); outline-o
 .modal-body { padding: 18px; }
 .modal-foot { padding: 13px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
 
+/* Destructive confirmation — narrower than a form dialog, since it is read
+   rather than filled in. */
+.modal.confirm { max-width: 400px; }
+.modal.confirm .modal-head { color: var(--red); }
+.confirm-message { margin: 0; font-size: 15px; line-height: 1.5; }
+.confirm-detail { margin: 8px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+button.danger-solid {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  font-weight: 500;
+}
+button.danger-solid:hover:not(:disabled) { background: #b91c1c; border-color: #b91c1c; }
+
 @media (max-width: 800px) {
   .shell { flex-direction: column; }
   .sidebar { width: 100%; }

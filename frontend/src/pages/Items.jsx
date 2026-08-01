@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, fieldErrors } from '../api.js'
-import { Alert, Empty, Field, Loading, Modal, Panel, Pill, qty, when } from '../components/ui.jsx'
+import { Alert, Confirm, Empty, Field, Loading, Modal, Panel, Pill, qty, when } from '../components/ui.jsx'
 
 const EMPTY_FORM = { sku: '', name: '', unit_id: '', reorder_level: '0', description: '' }
 
@@ -20,6 +20,9 @@ export default function Items({ endpoint, title, noun }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [formErrors, setFormErrors] = useState({})
   const [saving, setSaving] = useState(false)
+
+  const [confirming, setConfirming] = useState(null) // the row awaiting delete confirmation
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     setError('')
@@ -94,18 +97,24 @@ export default function Items({ endpoint, title, noun }) {
     }
   }
 
-  async function remove(row) {
-    if (!confirm(`Delete ${row.name}?`)) return
+  async function remove() {
+    const row = confirming
     setError('')
     setNotice('')
+    setDeleting(true)
     try {
       await api.del(`${endpoint}/${row.id}`)
+      setConfirming(null)
       setNotice(`${noun} deleted.`)
       load()
     } catch (err) {
       // A 409 here is the domain guard refusing to delete an item that still
-      // holds inventory — worth surfacing verbatim.
+      // holds inventory — worth surfacing verbatim. Close the dialog so the
+      // banner underneath is actually readable.
+      setConfirming(null)
       setError(err.message)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -158,7 +167,7 @@ export default function Items({ endpoint, title, noun }) {
                     <td className="muted">{when(row.created_at)}</td>
                     <td style={{ textAlign: 'right' }}>
                       <button className="sm" onClick={() => openEdit(row)}>Edit</button>{' '}
-                      <button className="sm danger" onClick={() => remove(row)}>Delete</button>
+                      <button className="sm danger" onClick={() => setConfirming(row)}>Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -203,6 +212,18 @@ export default function Items({ endpoint, title, noun }) {
             <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
         </Modal>
+      )}
+
+      {confirming && (
+        <Confirm
+          title={`Delete ${noun.toLowerCase()}`}
+          message={`Delete ${confirming.name} (${confirming.sku})?`}
+          detail="Items that already hold stock or appear in production history cannot be deleted — the server will refuse and say so."
+          confirmLabel="Delete"
+          busy={deleting}
+          onConfirm={remove}
+          onCancel={() => setConfirming(null)}
+        />
       )}
     </>
   )

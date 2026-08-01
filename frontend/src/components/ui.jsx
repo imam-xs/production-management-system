@@ -109,6 +109,47 @@ export function Modal({ title, onClose, onSubmit, submitting, submitLabel = 'Sav
   )
 }
 
+/**
+ * Confirmation for a destructive action.
+ *
+ * Replaces window.confirm, which cannot be styled, blocks the whole tab, and
+ * gives no room to say *what* is about to be lost. Here the item is named and
+ * the consequence spelled out, so the click is an informed one.
+ *
+ * Cancel is the safe default and takes the ordinary button; the destructive
+ * action is the one that has to be deliberately chosen.
+ */
+export function Confirm({ title, message, detail, confirmLabel = 'Delete', onConfirm, onCancel, busy = false }) {
+  const cancel = useRef(onCancel)
+  cancel.current = onCancel
+
+  useEffect(() => {
+    function onKeyDown(event) {
+      if (event.key === 'Escape') cancel.current()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal confirm" role="alertdialog" aria-modal="true" aria-label={title}>
+        <div className="modal-head">{title}</div>
+        <div className="modal-body">
+          <p className="confirm-message">{message}</p>
+          {detail && <p className="confirm-detail">{detail}</p>}
+        </div>
+        <div className="modal-foot">
+          <button type="button" onClick={onCancel} disabled={busy}>Cancel</button>
+          <button type="button" className="danger-solid" onClick={onConfirm} disabled={busy} autoFocus>
+            {busy ? 'Working…' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Quantities arrive from the API as decimal strings (never floats) so the exact
 // value survives. Trim the trailing zeros only for display.
 export function qty(value) {
