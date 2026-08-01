@@ -67,6 +67,15 @@ interface BatchRepositoryInterface
     public function hasRemainingStock(Item $item): bool;
 
     /**
+     * Whether the item has ever been batched, regardless of what is left.
+     *
+     * Stronger than hasRemainingStock and the one deletion actually needs: a
+     * fully consumed batch still anchors a traceability chain, so removing the
+     * item it names would break every trace that passes through it.
+     */
+    public function hasAnyBatch(Item $item): bool;
+
+    /**
      * Batches of one item type produced on a given day, used to allocate the
      * next batch-number sequence. Scoped by type (not just date) so RM/SF/FG
      * numbering each start their own daily sequence.

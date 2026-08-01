@@ -63,7 +63,9 @@ class ProductionOrder extends Model
      */
     public function outputItem(): BelongsTo
     {
-        return $this->belongsTo(Item::class, 'output_item_id');
+        // withTrashed — see Batch::item(). A completed order must keep naming
+        // what it produced.
+        return $this->belongsTo(Item::class, 'output_item_id')->withTrashed();
     }
 
     /**

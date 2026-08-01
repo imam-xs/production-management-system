@@ -53,7 +53,9 @@ class InventoryMovement extends Model
      */
     public function item(): BelongsTo
     {
-        return $this->belongsTo(Item::class);
+        // withTrashed — see Batch::item(). A ledger entry must never lose the
+        // name of what it moved.
+        return $this->belongsTo(Item::class)->withTrashed();
     }
 
     /**

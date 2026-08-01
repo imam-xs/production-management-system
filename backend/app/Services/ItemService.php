@@ -6,6 +6,7 @@ use App\Enums\ItemType;
 use App\Exceptions\ItemHasStockException;
 use App\Models\Item;
 use App\Repositories\Contracts\BatchRepositoryInterface;
+use App\Repositories\Contracts\BillOfMaterialRepositoryInterface;
 use App\Repositories\Contracts\ItemRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,6 +25,7 @@ class ItemService
     public function __construct(
         private readonly ItemRepositoryInterface $items,
         private readonly BatchRepositoryInterface $batches,
+        private readonly BillOfMaterialRepositoryInterface $boms,
     ) {}
 
     /**
@@ -85,10 +87,29 @@ class ItemService
         return $this->items->update($item, $attributes);
     }
 
+    /**
+     * Delete an item — only ever one that nothing depends on.
+     *
+     * Checked in order of how obvious the answer is to the person clicking:
+     * stock on hand first, then production history, then recipes. All three are
+     * refusals rather than cascades, because every one of them would break a
+     * traceability chain that already exists.
+     *
+     * A product that has been used is retired by clearing `is_active`, not by
+     * deleting it — the records that name it must keep resolving.
+     */
     public function delete(Item $item): void
     {
         if ($this->batches->hasRemainingStock($item)) {
             throw ItemHasStockException::forItem($item);
+        }
+
+        if ($this->batches->hasAnyBatch($item)) {
+            throw ItemHasStockException::usedInProduction($item);
+        }
+
+        if ($this->boms->isReferenced($item)) {
+            throw ItemHasStockException::usedInRecipe($item);
         }
 
         $this->items->delete($item);

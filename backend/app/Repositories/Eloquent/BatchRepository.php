@@ -98,6 +98,13 @@ class BatchRepository extends BaseRepository implements BatchRepositoryInterface
             ->exists();
     }
 
+    public function hasAnyBatch(Item $item): bool
+    {
+        return $this->query()
+            ->where('item_id', $item->id)
+            ->exists();
+    }
+
     public function countProducedOn(DateTimeInterface $date, ?ItemType $type = null): int
     {
         return $this->query()

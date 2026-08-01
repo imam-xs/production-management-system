@@ -27,6 +27,14 @@ interface BillOfMaterialRepositoryInterface
     public function hasRecipe(Item $outputItem): bool;
 
     /**
+     * Whether any recipe line names this item, on either side.
+     *
+     * Deleting an item a recipe depends on would leave that recipe unbuildable,
+     * so deletion has to refuse while the reference exists.
+     */
+    public function isReferenced(Item $item): bool;
+
+    /**
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): BillOfMaterial;

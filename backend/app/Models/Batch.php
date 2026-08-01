@@ -58,7 +58,10 @@ class Batch extends Model
      */
     public function item(): BelongsTo
     {
-        return $this->belongsTo(Item::class);
+        // withTrashed: a batch is history, and history must keep resolving even
+        // if the item was later retired. Without this the relation returns null
+        // for a soft-deleted item and every trace through this batch breaks.
+        return $this->belongsTo(Item::class)->withTrashed();
     }
 
     /**

@@ -36,6 +36,17 @@ class BillOfMaterialRepository extends BaseRepository implements BillOfMaterialR
         return $this->query()->where('output_item_id', $outputItem->id)->exists();
     }
 
+    public function isReferenced(Item $item): bool
+    {
+        return $this->query()
+            ->where('output_item_id', $item->id)
+            ->orWhere('input_item_id', $item->id)
+            ->exists();
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
     public function create(array $attributes): BillOfMaterial
     {
         return $this->persist($attributes);
