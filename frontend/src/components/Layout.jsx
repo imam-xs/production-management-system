@@ -42,6 +42,14 @@ const TITLES = {
   '/events': 'Event Log',
 }
 
+// "Plant Administrator" -> "PA". Falls back to a single character rather than
+// rendering an empty circle while the session is still resolving.
+function initialsOf(name) {
+  const parts = String(name ?? '').trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase()
+}
+
 export default function Layout({ user, onLogout, children }) {
   const location = useLocation()
   const [lowStockCount, setLowStockCount] = useState(0)
@@ -85,15 +93,22 @@ export default function Layout({ user, onLogout, children }) {
             ))}
           </div>
         ))}
+
+        {/* Pinned to the bottom of the sidebar (margin-top: auto), which keeps
+            the topbar for the one thing that changes as you navigate — where
+            you are — rather than mixing it with who you are. */}
+        <div className="sidebar-foot">
+          <div className="sidebar-user">
+            <span className="avatar">{initialsOf(user?.name)}</span>
+            <span className="sidebar-user-name">{user?.name}</span>
+          </div>
+          <button className="sign-out" onClick={onLogout}>Sign out</button>
+        </div>
       </aside>
 
       <div className="main">
         <header className="topbar">
           <h1>{title}</h1>
-          <div className="row shrink" style={{ gap: 12, alignItems: 'center' }}>
-            <span className="who">{user?.name}</span>
-            <button className="sm" onClick={onLogout}>Sign out</button>
-          </div>
         </header>
         <main className="content">{children}</main>
       </div>
