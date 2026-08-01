@@ -65,10 +65,30 @@ export function Empty({ children = 'Nothing to show yet.' }) {
   return <div className="empty">{children}</div>
 }
 
+/**
+ * Deliberately does NOT close on a backdrop click.
+ *
+ * These modals hold half-typed forms and there is no draft to recover — a stray
+ * click beside the dialog would discard the lot silently. Escape and Cancel both
+ * remain, and both are deliberate acts rather than a slip of the mouse.
+ */
 export function Modal({ title, onClose, onSubmit, submitting, submitLabel = 'Save', children }) {
+  // Held in a ref so an inline arrow from the caller does not re-register the
+  // listener on every render.
+  const close = useRef(onClose)
+  close.current = onClose
+
+  useEffect(() => {
+    function onKeyDown(event) {
+      if (event.key === 'Escape') close.current()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-head">{title}</div>
         <form
           onSubmit={(e) => {
