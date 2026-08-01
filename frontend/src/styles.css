@@ -193,6 +193,20 @@ input:focus, select:focus { outline: 2px solid rgba(37, 99, 235, 0.3); outline-o
 
 .low { color: var(--red); font-weight: 600; }
 
+.retired {
+  margin-left: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1px 7px;
+}
+
+.checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.checkbox input { width: auto; margin: 0; }
+
 /* ---------- recipe preview (new production order) ---------- */
 
 .recipe {

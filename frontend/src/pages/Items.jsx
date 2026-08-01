@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api, fieldErrors } from '../api.js'
 import { Alert, Confirm, Empty, Field, Loading, Modal, Panel, Pill, qty, when } from '../components/ui.jsx'
 
-const EMPTY_FORM = { sku: '', name: '', unit_id: '', reorder_level: '0', description: '' }
+const EMPTY_FORM = { sku: '', name: '', unit_id: '', reorder_level: '0', description: '', is_active: true }
 
 /**
  * One component serves all three item stages — the fields and behaviour are
@@ -67,6 +67,7 @@ export default function Items({ endpoint, title, noun }) {
       unit_id: row.unit?.id ?? '',
       reorder_level: qty(row.reorder_level),
       description: row.description ?? '',
+      is_active: row.is_active,
     })
     setFormErrors({})
     setEditing(row)
@@ -82,6 +83,7 @@ export default function Items({ endpoint, title, noun }) {
         unit_id: Number(form.unit_id),
         reorder_level: form.reorder_level === '' ? 0 : Number(form.reorder_level),
         description: form.description || null,
+        is_active: form.is_active,
       }
       if (editing.id) await api.put(`${endpoint}/${editing.id}`, payload)
       else await api.post(endpoint, payload)
@@ -159,7 +161,10 @@ export default function Items({ endpoint, title, noun }) {
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td className="mono">{row.sku}</td>
-                    <td>{row.name}</td>
+                    <td>
+                      {row.name}
+                      {!row.is_active && <span className="retired">retired</span>}
+                    </td>
                     <td><Pill value={row.type} /></td>
                     <td className={`num ${row.is_low_stock ? 'low' : ''}`}>{qty(row.quantity_on_hand)}</td>
                     <td className="num muted">{qty(row.reorder_level)}</td>
@@ -214,6 +219,19 @@ export default function Items({ endpoint, title, noun }) {
           <Field label="Description" error={formErrors.description}>
             <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
+          {/* Retiring a product is the counterpart to deleting one: an item that
+              has been used cannot be removed without breaking traceability, so
+              this is how it leaves circulation. */}
+          <Field label="Status" error={formErrors.is_active}>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={form.is_active}
+                onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+              />
+              <span>Active — available for new production and receipts</span>
+            </label>
+          </Field>
         </Modal>
       )}
 
@@ -228,7 +246,7 @@ export default function Items({ endpoint, title, noun }) {
           detail={
             confirming.can_delete
               ? 'Nothing depends on this item — it has never been produced and no recipe refers to it.'
-              : 'It holds stock, appears in production history, or a recipe names it. Deleting it would break the traceability chain that already points at it. Retire it by clearing “Active” instead.'
+              : 'It holds stock, appears in production history, or a recipe names it — deleting it would break the traceability chain that already points at it. To take it out of circulation, press Edit and uncheck “Active”.'
           }
           confirmLabel="Delete"
           cancelLabel={confirming.can_delete ? 'Cancel' : 'Close'}

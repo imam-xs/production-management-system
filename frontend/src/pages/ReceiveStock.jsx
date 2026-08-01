@@ -19,7 +19,8 @@ export default function ReceiveStock() {
   async function load() {
     try {
       const [items, batches] = await Promise.all([
-        api.get('/raw-materials?per_page=100'),
+        // Active only — a retired material must not be receivable either.
+        api.get('/raw-materials?per_page=100&is_active=1'),
         api.get('/batches?item_type=raw&origin=purchase&per_page=10'),
       ])
       setMaterials(items.data)

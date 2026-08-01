@@ -42,7 +42,13 @@ export default function Production() {
   // received, never manufactured. The API enforces this too — this just avoids
   // offering an option that would be rejected.
   useEffect(() => {
-    Promise.all([api.get('/semi-finished-products?per_page=100'), api.get('/finished-products?per_page=100')])
+    // is_active=1: a retired product must not be offered for a new run. That is
+    // the whole point of retiring one — it cannot be deleted once it has been
+    // produced, so this is how it leaves circulation.
+    Promise.all([
+      api.get('/semi-finished-products?per_page=100&is_active=1'),
+      api.get('/finished-products?per_page=100&is_active=1'),
+    ])
       .then(([semi, fin]) => setProducible([...semi.data, ...fin.data]))
       .catch(() => {})
   }, [])
