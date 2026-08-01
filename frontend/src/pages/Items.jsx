@@ -167,20 +167,10 @@ export default function Items({ endpoint, title, noun }) {
                     <td className="muted">{when(row.created_at)}</td>
                     <td style={{ textAlign: 'right' }}>
                       <button className="sm" onClick={() => openEdit(row)}>Edit</button>{' '}
-                      {/* can_delete mirrors the server's rule, so the button is
-                          only offered when it would actually succeed. */}
-                      <button
-                        className="sm danger"
-                        disabled={!row.can_delete}
-                        title={
-                          row.can_delete
-                            ? undefined
-                            : 'In use — it has stock, production history, or a recipe refers to it. Mark it inactive instead.'
-                        }
-                        onClick={() => setConfirming(row)}
-                      >
-                        Delete
-                      </button>
+                      {/* Always clickable: the dialog is where the user finds
+                          out *why* an item cannot be removed, which a greyed-out
+                          button here would never tell them. */}
+                      <button className="sm danger" onClick={() => setConfirming(row)}>Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -229,10 +219,20 @@ export default function Items({ endpoint, title, noun }) {
 
       {confirming && (
         <Confirm
-          title={`Delete ${noun.toLowerCase()}`}
-          message={`Delete ${confirming.name} (${confirming.sku})?`}
-          detail="This item has never been produced or used in a recipe, so nothing depends on it. It can be recreated later if needed."
+          title={confirming.can_delete ? `Delete ${noun.toLowerCase()}` : 'Cannot delete'}
+          message={
+            confirming.can_delete
+              ? `Delete ${confirming.name} (${confirming.sku})?`
+              : `${confirming.name} (${confirming.sku}) is still in use.`
+          }
+          detail={
+            confirming.can_delete
+              ? 'Nothing depends on this item — it has never been produced and no recipe refers to it.'
+              : 'It holds stock, appears in production history, or a recipe names it. Deleting it would break the traceability chain that already points at it. Retire it by clearing “Active” instead.'
+          }
           confirmLabel="Delete"
+          cancelLabel={confirming.can_delete ? 'Cancel' : 'Close'}
+          disabled={!confirming.can_delete}
           busy={deleting}
           onConfirm={remove}
           onCancel={() => setConfirming(null)}

@@ -119,7 +119,17 @@ export function Modal({ title, onClose, onSubmit, submitting, submitLabel = 'Sav
  * Cancel is the safe default and takes the ordinary button; the destructive
  * action is the one that has to be deliberately chosen.
  */
-export function Confirm({ title, message, detail, confirmLabel = 'Delete', onConfirm, onCancel, busy = false }) {
+export function Confirm({
+  title,
+  message,
+  detail,
+  confirmLabel = 'Delete',
+  cancelLabel = 'Cancel',
+  onConfirm,
+  onCancel,
+  busy = false,
+  disabled = false,
+}) {
   const cancel = useRef(onCancel)
   cancel.current = onCancel
 
@@ -140,8 +150,14 @@ export function Confirm({ title, message, detail, confirmLabel = 'Delete', onCon
           {detail && <p className="confirm-detail">{detail}</p>}
         </div>
         <div className="modal-foot">
-          <button type="button" onClick={onCancel} disabled={busy}>Cancel</button>
-          <button type="button" className="danger-solid" onClick={onConfirm} disabled={busy} autoFocus>
+          <button type="button" onClick={onCancel} disabled={busy}>{cancelLabel}</button>
+          <button
+            type="button"
+            className="danger-solid"
+            onClick={onConfirm}
+            disabled={busy || disabled}
+            autoFocus={!disabled}
+          >
             {busy ? 'Working…' : confirmLabel}
           </button>
         </div>
