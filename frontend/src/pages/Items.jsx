@@ -229,7 +229,7 @@ export default function Items({ endpoint, title, noun }) {
                 checked={form.is_active}
                 onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
               />
-              <span>Active — available for new production and receipts</span>
+              <span>Active</span>
             </label>
           </Field>
         </Modal>
