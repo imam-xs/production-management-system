@@ -27,6 +27,23 @@ class ItemRepository extends BaseRepository implements ItemRepositoryInterface
         return new Item;
     }
 
+    /**
+     * The standard read query for any item that will be serialised.
+     *
+     * The three `withExists` flags answer "does anything still depend on this
+     * item?" in the same round trip, so the UI can disable a Delete action the
+     * server would refuse anyway. ItemService::delete() remains the authority —
+     * these are a hint, never a substitute for the check.
+     *
+     * @return Builder<Item>
+     */
+    private function readQuery(): Builder
+    {
+        return $this->query()
+            ->with(['unit', 'stock'])
+            ->withExists(['batches', 'billOfMaterials', 'usedIn']);
+    }
+
     public function paginateByType(
         ItemType $type,
         ?string $search = null,
@@ -35,8 +52,7 @@ class ItemRepository extends BaseRepository implements ItemRepositoryInterface
         string $sortDirection = 'asc',
         int $perPage = 15,
     ): LengthAwarePaginator {
-        return $this->query()
-            ->with(['unit', 'stock'])
+        return $this->readQuery()
             ->where('type', $type)
             ->when($isActive !== null, fn (Builder $q): Builder => $q->where('is_active', $isActive))
             ->when(
@@ -62,8 +78,7 @@ class ItemRepository extends BaseRepository implements ItemRepositoryInterface
 
     public function allOfType(ItemType $type): Collection
     {
-        return $this->query()
-            ->with(['unit', 'stock'])
+        return $this->readQuery()
             ->where('type', $type)
             ->orderBy('name')
             ->get();
@@ -71,18 +86,17 @@ class ItemRepository extends BaseRepository implements ItemRepositoryInterface
 
     public function findById(int $id): ?Item
     {
-        return $this->query()->with(['unit', 'stock'])->find($id);
+        return $this->readQuery()->find($id);
     }
 
     public function findByIdOrFail(int $id): Item
     {
-        return $this->query()->with(['unit', 'stock'])->findOrFail($id);
+        return $this->readQuery()->findOrFail($id);
     }
 
     public function findByIdAndType(int $id, ItemType $type): ?Item
     {
-        return $this->query()
-            ->with(['unit', 'stock'])
+        return $this->readQuery()
             ->where('type', $type)
             ->find($id);
     }
@@ -96,12 +110,15 @@ class ItemRepository extends BaseRepository implements ItemRepositoryInterface
     {
         $item = $this->persist($attributes);
 
-        return $item->load(['unit', 'stock']);
+        return $item->load(['unit', 'stock'])
+            ->loadExists(['batches', 'billOfMaterials', 'usedIn']);
     }
 
     public function update(Item $item, array $attributes): Item
     {
-        return $this->applyUpdate($item, $attributes)->load(['unit', 'stock']);
+        return $this->applyUpdate($item, $attributes)
+            ->load(['unit', 'stock'])
+            ->loadExists(['batches', 'billOfMaterials', 'usedIn']);
     }
 
     public function delete(Item $item): void

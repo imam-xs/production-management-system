@@ -167,7 +167,20 @@ export default function Items({ endpoint, title, noun }) {
                     <td className="muted">{when(row.created_at)}</td>
                     <td style={{ textAlign: 'right' }}>
                       <button className="sm" onClick={() => openEdit(row)}>Edit</button>{' '}
-                      <button className="sm danger" onClick={() => setConfirming(row)}>Delete</button>
+                      {/* can_delete mirrors the server's rule, so the button is
+                          only offered when it would actually succeed. */}
+                      <button
+                        className="sm danger"
+                        disabled={!row.can_delete}
+                        title={
+                          row.can_delete
+                            ? undefined
+                            : 'In use — it has stock, production history, or a recipe refers to it. Mark it inactive instead.'
+                        }
+                        onClick={() => setConfirming(row)}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -218,7 +231,7 @@ export default function Items({ endpoint, title, noun }) {
         <Confirm
           title={`Delete ${noun.toLowerCase()}`}
           message={`Delete ${confirming.name} (${confirming.sku})?`}
-          detail="Items that already hold stock or appear in production history cannot be deleted — the server will refuse and say so."
+          detail="This item has never been produced or used in a recipe, so nothing depends on it. It can be recreated later if needed."
           confirmLabel="Delete"
           busy={deleting}
           onConfirm={remove}
