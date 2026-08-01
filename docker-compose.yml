@@ -1,0 +1,161 @@
+# ---------------------------------------------------------------------------
+# Production Management System — full stack.
+#
+#   docker compose up -d
+#
+# That single command builds the backend image, waits for MySQL and RabbitMQ to
+# be healthy, installs dependencies, runs migrations + seeders, starts the API,
+# the RabbitMQ consumer, and the React admin UI.
+#
+# Apache + mod_php serves the API directly, so there is no separate web-server
+# container. The API and the worker run the same image, distinguished only by
+# APP_ROLE, so their code and extensions can never drift.
+#
+# Credentials below are development defaults and intentionally committed so the
+# stack boots with no manual setup. They match backend/.env.example.
+# ---------------------------------------------------------------------------
+
+name: pms
+
+# ---------------------------------------------------------------------------
+# Everything the backend needs to reach the other containers.
+#
+# Declared here rather than left to backend/.env on purpose. .env is gitignored
+# and a developer's copy may legitimately point at a local database instead —
+# Laravel's dotenv loader does not overwrite variables that already exist in the
+# environment, so these values always win inside a container. That is what makes
+# `docker compose up` behave identically no matter what the working copy's .env
+# happens to contain.
+# ---------------------------------------------------------------------------
+x-backend-env: &backend-env
+  DB_CONNECTION: mysql
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_DATABASE: production_management
+  DB_USERNAME: pms_user
+  DB_PASSWORD: pms_secret
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: 5672
+  RABBITMQ_USER: pms_user
+  RABBITMQ_PASSWORD: pms_secret
+  MESSAGE_PUBLISHER: rabbitmq
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: pms-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: production_management
+      MYSQL_USER: pms_user
+      MYSQL_PASSWORD: pms_secret
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"   # 3307 on the host to avoid clashing with a local MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks: [pms]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: pms-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: pms_user
+      RABBITMQ_DEFAULT_PASS: pms_secret
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # management UI — http://localhost:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks: [pms]
+
+  app:
+    build:
+      context: ./backend
+    image: pms-backend
+    container_name: pms-app
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      APP_ROLE: app
+    ports:
+      - "8000:80"       # API — http://localhost:8000
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 120s   # generous: first boot runs composer install
+    networks: [pms]
+
+  worker:
+    build:
+      context: ./backend
+    image: pms-backend
+    container_name: pms-worker
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      APP_ROLE: worker
+    # The consumer that processes production events asynchronously.
+    command: ["php", "artisan", "rabbitmq:consume"]
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      app:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    stop_grace_period: 30s   # allow the consumer to finish the in-flight message
+    networks: [pms]
+
+  frontend:
+    image: node:22-alpine
+    container_name: pms-frontend
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"     # admin UI — http://localhost:5173
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - app
+    networks: [pms]
+
+volumes:
+  mysql_data:
+  rabbitmq_data:
+  frontend_node_modules:
+
+networks:
+  pms:
+    driver: bridge
