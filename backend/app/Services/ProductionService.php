@@ -25,19 +25,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
-
-/**
- * Plans and executes production runs.
- *
- * execute() is where the assignment's two hardest requirements meet: stock
- * must be deducted/added atomically, and production must be blocked outright
- * when input inventory is short. Both only hold if the check and the write
- * happen in the same locked transaction — which is why this deduction is
- * synchronous rather than left to the RabbitMQ consumer (see the design
- * rationale in TASKS.md's decisions table). The consumer's job, wired in
- * Phase 5, is the side effects: event log, notifications — never the stock
- * numbers themselves.
- */
 class ProductionService
 {
     public function __construct(
@@ -51,9 +38,7 @@ class ProductionService
         private readonly OrderNumberGenerator $orderNumbers,
     ) {}
 
-    /**
-     * @return LengthAwarePaginator<int, ProductionOrder>
-     */
+
     public function list(
         ?string $search = null,
         ?ProductionStage $stage = null,
@@ -64,24 +49,14 @@ class ProductionService
         return $this->orders->paginate($search, $stage, $status, $outputItemId, $perPage);
     }
 
-    /**
-     * @throws ModelNotFoundException
-     */
+
     public function findOrFail(int $id): ProductionOrder
     {
         return $this->orders->findByIdOrFail($id);
     }
 
-    /**
-     * The event log the RabbitMQ consumer writes — exposed so the asynchronous
-     * path is observable rather than something a reviewer has to take on trust.
-     *
-     * Queried through the model directly rather than a repository: this table is
-     * append-only with no query complexity, which is exactly the case the
-     * "repository only where it earns its keep" rule carves out.
-     *
-     * @return LengthAwarePaginator<int, ProductionEventLog>
-     */
+  
+    // the log the RabbitMQ consumer writes
     public function eventLog(int $perPage = 15): LengthAwarePaginator
     {
         return ProductionEventLog::query()
@@ -90,12 +65,10 @@ class ProductionService
             ->paginate($perPage);
     }
 
-    /**
-     * Plan a production run: which stage, how much, of what — without touching
-     * inventory. Inventory is only ever moved by execute().
-     *
-     * @throws InvalidProductionStageException
-     */
+    
+     //plan a production run which stage, how much, of what — without touching inventory
+     //inventory is only ever moved by execute()
+
     public function createOrder(Item $outputItem, string $plannedQuantity, ?User $createdBy = null): ProductionOrder
     {
         $stage = ProductionStage::forOutputType($outputItem->type);
@@ -104,13 +77,8 @@ class ProductionService
             throw InvalidProductionStageException::itemIsNotProduced($outputItem);
         }
 
-        // Retired products leave circulation for new work. Enforced here rather
-        // than only by hiding them from the UI's dropdown, so the rule holds for
-        // any client — the interface filters as a convenience, not as the guard.
-        //
-        // Deliberately scoped to the *output*: existing stock of a retired input
-        // must still be consumable, which is how a component is phased out
-        // rather than stranded.
+        // output only — retired items stay consumable as inputs
+
         if (! $outputItem->is_active) {
             throw ItemRetiredException::cannotProduce($outputItem);
         }
@@ -124,102 +92,111 @@ class ProductionService
         }
 
         return $this->orders->create([
-            'order_number' => $this->orderNumbers->generate(now()),
-            'stage' => $stage,
-            'output_item_id' => $outputItem->id,
+            'order_number'     => $this->orderNumbers->generate(now()),
+            'stage'            => $stage,
+            'output_item_id'   => $outputItem->id,
             'planned_quantity' => $plannedQuantity,
-            'status' => ProductionOrderStatus::Pending,
-            'created_by' => $createdBy?->id,
+            'status'           => ProductionOrderStatus::Pending,
+            'created_by'       => $createdBy?->id,
         ]);
     }
 
-    /**
-     * Execute a pending order: consume its recipe's inputs and produce one
-     * output batch.
-     *
-     * Wrapped with an automatic retry (Laravel's third `DB::transaction`
-     * argument) rather than manual multi-item lock ordering: InnoDB detects a
-     * genuine deadlock between two orders that lock overlapping items in
-     * different orders and aborts one of them; Laravel re-runs this closure
-     * from scratch when that happens, which is safe because nothing commits
-     * until the very end.
-     *
-     * @throws ProductionOrderNotPendingException
-     * @throws InsufficientInventoryException
-     */
+   
+     //execute a pending order: consume its recipe's inputs and produce one output batch
+   
     public function execute(ProductionOrder $order): ProductionOrder
     {
         return DB::transaction(function () use ($order): ProductionOrder {
-            $locked = $this->orders->lockById($order->id);
-
-            if ($locked === null) {
-                throw (new ModelNotFoundException)->setModel(ProductionOrder::class, [$order->id]);
-            }
-
-            if (! $locked->status->canBeExecuted()) {
-                throw ProductionOrderNotPendingException::forOrder($locked);
-            }
-
+            $locked = $this->lockPendingOrder($order);
             $outputItem = $this->items->findByIdOrFail($locked->output_item_id);
 
-            // Ordered by input_item_id (see BillOfMaterialRepository::recipeFor)
-            // so two orders sharing overlapping inputs always attempt their
-            // locks in the same relative order — reduces how often the retry
-            // above is actually needed, though it remains the real guarantee.
-            $recipe = $this->boms->recipeFor($outputItem);
-
-            // Allocate every input line before writing anything. If any line
-            // is short, InsufficientInventoryException aborts here and the
-            // transaction rolls back whole — no partial consumption.
-            $allocations = [];
-            foreach ($recipe as $line) {
-                $required = bcmul((string) $line->quantity_per_unit, (string) $locked->planned_quantity, 4);
-                $allocations[] = [
-                    'item' => $line->inputItem,
-                    'plan' => $this->allocator->allocate($line->inputItem, $required),
-                ];
-            }
-
-            foreach ($allocations as $allocation) {
-                $this->consumeAllocation($locked, $allocation['item'], $allocation['plan']);
-            }
-
-            $outputBatch = $this->batchFactory->make(
-                $outputItem,
-                (string) $locked->planned_quantity,
-                BatchOrigin::Production,
-                $locked,
-                now(),
-            );
-
-            $outputStock = $this->inventory->lockStockFor($outputItem);
-            $balance = $this->inventory->adjustStock($outputStock, (string) $locked->planned_quantity);
-            $this->inventory->recordMovement(
-                $outputItem,
-                $outputBatch,
-                MovementType::ProductionOutput,
-                (string) $locked->planned_quantity,
-                $balance,
-                reference: $locked,
-            );
+            $allocations = $this->allocateInputs($locked, $outputItem);
+            $this->consumeInputs($locked, $allocations);
+            $this->produceOutput($locked, $outputItem);
 
             $completed = $this->orders->markCompleted($locked, (string) $locked->planned_quantity);
 
-            // ProductionCompleted implements ShouldDispatchAfterCommit, so this
-            // call queues the dispatch rather than firing it now — the message
-            // only reaches RabbitMQ once this transaction has committed. That
-            // matters because this closure can be retried on deadlock: an
-            // event published from inside it could describe an order that then
-            // got rolled back.
+            // ShouldDispatchAfterCommit = the message reaches RabbitMQ only once this transaction commits
             ProductionCompleted::dispatch($completed);
 
             return $completed;
         }, attempts: 3);
     }
 
-    /**
-     * @param  list<array{batch: Batch, quantity: string}>  $plan
-     */
+    //lock the order row and confirm it is still pending, the caller's copy may be stale
+
+    private function lockPendingOrder(ProductionOrder $order): ProductionOrder
+    {
+        $locked = $this->orders->lockById($order->id);
+
+        if ($locked === null) {
+            throw (new ModelNotFoundException)->setModel(ProductionOrder::class, [$order->id]);
+        }
+
+        if (! $locked->status->canBeExecuted()) {
+            throw ProductionOrderNotPendingException::forOrder($locked);
+        }
+
+        return $locked;
+    }
+
+
+    //plan which batches will supply each input
+    private function allocateInputs(ProductionOrder $order, Item $outputItem): array
+    {
+        $allocations = [];
+
+        foreach ($this->boms->recipeFor($outputItem) as $line) {
+            $required = bcmul((string) $line->quantity_per_unit, (string) $order->planned_quantity, 4);
+
+            $allocations[] = [
+                'item' => $line->inputItem,
+                'plan' => $this->allocator->allocate($line->inputItem, $required),
+            ];
+        }
+
+        return $allocations;
+    }
+
+    //consume the allocated inputs
+    private function consumeInputs(ProductionOrder $order, array $allocations): void
+    {
+        foreach ($allocations as $allocation) {
+            $this->consumeAllocation($order, $allocation['item'], $allocation['plan']);
+        }
+    }
+
+    ///create the output batch, add it to stock and record the matching ledger row
+
+    private function produceOutput(ProductionOrder $order, Item $outputItem): Batch
+    {
+        $quantity = (string) $order->planned_quantity;
+
+        $outputBatch = $this->batchFactory->make(
+            $outputItem,
+            $quantity,
+            BatchOrigin::Production,
+            $order,
+            now(),
+        );
+
+        $stock = $this->inventory->lockStockFor($outputItem);
+        $balance = $this->inventory->adjustStock($stock, $quantity);
+
+        $this->inventory->recordMovement(
+            $outputItem,
+            $outputBatch,
+            MovementType::ProductionOutput,
+            $quantity,
+            $balance,
+            reference: $order,
+        );
+
+        return $outputBatch;
+    }
+
+  //deduct one input's planned quantity from its batches, recording a consumption edge and a ledger row for each
+
     private function consumeAllocation(ProductionOrder $order, Item $inputItem, array $plan): void
     {
         $stock = $this->inventory->lockStockFor($inputItem);
