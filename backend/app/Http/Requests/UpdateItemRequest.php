@@ -5,12 +5,6 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/**
- * Validation for updating an item, shared by all three production stages.
- * `type` is deliberately absent from the rules — it is immutable after creation
- * (ItemService::update() strips it even if a client sends it) because changing
- * it would orphan the item's existing batches and bill-of-materials lines.
- */
 class UpdateItemRequest extends FormRequest
 {
     /**
@@ -28,10 +22,7 @@ class UpdateItemRequest extends FormRequest
         ];
     }
 
-    /**
-     * The route's single int parameter, whatever it is named across the three
-     * concrete resources (`raw_material`, `semi_finished_product`, ...).
-     */
+    // the id being updated, read by position: the three item routes each name the parameter differently
     private function currentItemId(): int
     {
         $params = $this->route()?->parameters() ?? [];
