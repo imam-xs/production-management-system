@@ -11,21 +11,6 @@ use App\Http\Controllers\Api\V1\RecipeController;
 use App\Http\Controllers\Api\V1\SemiFinishedProductController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|---------------------------------------------------------------------------
-| Explicit routes, not Route::apiResource().
-|---------------------------------------------------------------------------
-|
-| Laravel resolves a plain (non-model) route parameter to a controller method
-| argument by matching NAMES, not position — apiResource's auto-generated
-| parameter name for `raw-materials` would be `raw_material`, which would not
-| bind to a `$rawMaterial` method argument. Writing routes explicitly, with a
-| URI placeholder that's spelled exactly like the controller argument,
-| sidesteps that mismatch entirely and also leaves room for the
-| non-CRUD actions (execute, trace, receipts) apiResource can't express.
-|
-*/
-
 Route::prefix('v1')->name('v1.')->group(function (): void {
 
     Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');
