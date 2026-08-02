@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ItemType;
 use App\Http\Requests\IndexItemRequest;
-use App\Http\Requests\StoreSemiFinishedProductRequest;
-use App\Http\Requests\UpdateSemiFinishedProductRequest;
+use App\Http\Requests\StoreItemRequest;
+use App\Http\Requests\UpdateItemRequest;
 use App\Http\Resources\ItemResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -27,12 +27,12 @@ class SemiFinishedProductController extends ItemController
         return $this->doShow($semiFinishedProduct);
     }
 
-    public function store(StoreSemiFinishedProductRequest $request): JsonResponse
+    public function store(StoreItemRequest $request): JsonResponse
     {
         return $this->doStore($request->validated());
     }
 
-    public function update(UpdateSemiFinishedProductRequest $request, int $semiFinishedProduct): JsonResponse
+    public function update(UpdateItemRequest $request, int $semiFinishedProduct): JsonResponse
     {
         return $this->doUpdate($semiFinishedProduct, $request->validated());
     }

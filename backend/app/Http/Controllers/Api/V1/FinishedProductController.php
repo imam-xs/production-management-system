@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ItemType;
 use App\Http\Requests\IndexItemRequest;
-use App\Http\Requests\StoreFinishedProductRequest;
-use App\Http\Requests\UpdateFinishedProductRequest;
+use App\Http\Requests\StoreItemRequest;
+use App\Http\Requests\UpdateItemRequest;
 use App\Http\Resources\ItemResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -27,12 +27,12 @@ class FinishedProductController extends ItemController
         return $this->doShow($finishedProduct);
     }
 
-    public function store(StoreFinishedProductRequest $request): JsonResponse
+    public function store(StoreItemRequest $request): JsonResponse
     {
         return $this->doStore($request->validated());
     }
 
-    public function update(UpdateFinishedProductRequest $request, int $finishedProduct): JsonResponse
+    public function update(UpdateItemRequest $request, int $finishedProduct): JsonResponse
     {
         return $this->doUpdate($finishedProduct, $request->validated());
     }

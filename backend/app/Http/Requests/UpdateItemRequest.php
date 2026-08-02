@@ -6,12 +6,12 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Shared validation for updating an item. `type` is deliberately absent from
- * the rules — it is immutable after creation (ItemService::update() strips it
- * even if a client sends it) because changing it would orphan the item's
- * existing batches and bill-of-materials lines.
+ * Validation for updating an item, shared by all three production stages.
+ * `type` is deliberately absent from the rules — it is immutable after creation
+ * (ItemService::update() strips it even if a client sends it) because changing
+ * it would orphan the item's existing batches and bill-of-materials lines.
  */
-abstract class UpdateItemRequest extends FormRequest
+class UpdateItemRequest extends FormRequest
 {
     /**
      * @return array<string, mixed>
