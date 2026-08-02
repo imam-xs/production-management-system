@@ -10,21 +10,7 @@ use App\Repositories\Contracts\BatchRepositoryInterface;
 use DateTimeInterface;
 use Illuminate\Database\QueryException;
 
-/**
- * Creates a batch with a guaranteed-unique batch number.
- *
- * One reason to change: "batch numbers must be unique even under concurrent
- * writes." Used by both InventoryService (purchase receipts) and
- * ProductionService (production output), which is why it is its own class
- * rather than duplicated in each.
- *
- * The `batch_number` unique index is the actual guarantee; two concurrent
- * receipts of *different* items of the same type on the same day can compute
- * the same candidate number before either commits (`BatchNumberGenerator`
- * counts existing rows, which is inherently racy without a lock of its own).
- * This retry loop is what turns that DB-level rejection into a clean second
- * attempt instead of a 500.
- */
+// creates a batch with a guaranteed-unique batch number
 class BatchFactory
 {
     private const MAX_ATTEMPTS = 5;
@@ -41,11 +27,7 @@ class BatchFactory
         ?ProductionOrder $producedBy,
         DateTimeInterface $producedAt,
     ): Batch {
-        $attempt = 0;
-
-        do {
-            $attempt++;
-
+        for ($attempt = 1; ; $attempt++) {
             try {
                 return $this->batches->create([
                     'batch_number' => $this->batchNumbers->generate($item, $producedAt),
@@ -57,11 +39,12 @@ class BatchFactory
                     'produced_at' => $producedAt,
                 ]);
             } catch (QueryException $e) {
+                // a clashing batch number is worth another try; anything else is not
                 if ($attempt >= self::MAX_ATTEMPTS || ! $this->isDuplicateBatchNumber($e)) {
                     throw $e;
                 }
             }
-        } while (true);
+        }
     }
 
     private function isDuplicateBatchNumber(QueryException $e): bool
