@@ -80,9 +80,9 @@ class InventoryService
      *
      * @return Collection<int, Item>
      */
-    public function snapshot(?ItemType $type = null): Collection
+    public function stockLevels(?ItemType $type = null): Collection
     {
-        return $this->inventory->snapshot($type);
+        return $this->inventory->stockLevels($type);
     }
 
     public function stockFor(Item $item): ItemStock

@@ -14,23 +14,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * @extends BaseRepository<ItemStock>
- */
-class InventoryRepository extends BaseRepository implements InventoryRepositoryInterface
+class InventoryRepository implements InventoryRepositoryInterface
 {
-    protected function model(): ItemStock
+    public function stockLevels(?ItemType $type = null): Collection
     {
-        return new ItemStock;
-    }
-
-    public function snapshot(?ItemType $type = null): Collection
-    {
-        // Driven by `items`, not by `item_stocks`. The stock row is only created
-        // on an item's first movement, so querying item_stocks would silently
-        // omit every item sitting at zero — which is precisely the stock level a
-        // plant most needs to see. Callers read the quantity through the
-        // (possibly absent) `stock` relation and treat missing as zero.
         return Item::query()
             ->with(['unit', 'stock'])
             ->when($type instanceof ItemType, fn (Builder $q): Builder => $q->where('type', $type))
@@ -41,7 +28,7 @@ class InventoryRepository extends BaseRepository implements InventoryRepositoryI
 
     public function stockFor(Item $item): ItemStock
     {
-        return $this->query()->firstOrCreate(
+        return ItemStock::query()->firstOrCreate(
             ['item_id' => $item->id],
             ['quantity_on_hand' => '0'],
         );
@@ -49,12 +36,10 @@ class InventoryRepository extends BaseRepository implements InventoryRepositoryI
 
     public function lockStockFor(Item $item): ItemStock
     {
-        // Ensure the row exists before locking — you cannot lock what is not
-        // there, and a missing row is the normal state for a brand new item.
         $this->stockFor($item);
 
         /** @var ItemStock $locked */
-        $locked = $this->query()
+        $locked = ItemStock::query()
             ->where('item_id', $item->id)
             ->lockForUpdate()
             ->firstOrFail();

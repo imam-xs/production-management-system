@@ -13,16 +13,8 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-/**
- * @extends BaseRepository<ProductionOrder>
- */
-class ProductionOrderRepository extends BaseRepository implements ProductionOrderRepositoryInterface
+class ProductionOrderRepository implements ProductionOrderRepositoryInterface
 {
-    protected function model(): ProductionOrder
-    {
-        return new ProductionOrder;
-    }
-
     public function paginate(
         ?string $search = null,
         ?ProductionStage $stage = null,
@@ -30,7 +22,7 @@ class ProductionOrderRepository extends BaseRepository implements ProductionOrde
         ?int $outputItemId = null,
         int $perPage = 15,
     ): LengthAwarePaginator {
-        return $this->query()
+        return ProductionOrder::query()
             ->with(['outputItem.unit', 'outputBatch', 'creator'])
             ->when($stage instanceof ProductionStage, fn (Builder $q): Builder => $q->where('stage', $stage))
             ->when($status instanceof ProductionOrderStatus, fn (Builder $q): Builder => $q->where('status', $status))
@@ -46,7 +38,7 @@ class ProductionOrderRepository extends BaseRepository implements ProductionOrde
 
     public function findByIdOrFail(int $id): ProductionOrder
     {
-        return $this->query()
+        return ProductionOrder::query()
             ->with(['outputItem.unit', 'outputBatch', 'creator', 'consumptions.inputBatch.item'])
             ->findOrFail($id);
     }
@@ -54,21 +46,23 @@ class ProductionOrderRepository extends BaseRepository implements ProductionOrde
     public function lockById(int $id): ?ProductionOrder
     {
         // No eager loading: a locking read should touch exactly the row it locks.
-        return $this->query()->lockForUpdate()->find($id);
+        return ProductionOrder::query()->lockForUpdate()->find($id);
     }
 
     public function create(array $attributes): ProductionOrder
     {
-        return $this->persist($attributes);
+        return ProductionOrder::query()->create($attributes);
     }
 
     public function markCompleted(ProductionOrder $order, string $producedQuantity): ProductionOrder
     {
-        return $this->applyUpdate($order, [
+        $order->fill([
             'status' => ProductionOrderStatus::Completed,
             'produced_quantity' => $producedQuantity,
             'completed_at' => now(),
-        ]);
+        ])->save();
+
+        return $order->refresh();
     }
 
     public function recordConsumption(
@@ -103,7 +97,7 @@ class ProductionOrderRepository extends BaseRepository implements ProductionOrde
 
     public function countCreatedOn(DateTimeInterface $date): int
     {
-        return $this->query()
+        return ProductionOrder::query()
             ->whereDate('created_at', $date->format('Y-m-d'))
             ->count();
     }

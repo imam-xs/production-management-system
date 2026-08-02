@@ -10,9 +10,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * One row of the inventory view: an item plus its current quantity.
  *
- * Wraps an Item rather than an ItemStock because the snapshot is item-driven —
+ * Wraps an Item rather than an ItemStock because the listing is item-driven —
  * an item whose stock row does not exist yet must still be listed, reading as
- * zero. See InventoryRepository::snapshot() for why.
+ * zero. See InventoryRepository::stockLevels() for why.
  *
  * @property Item $resource
  */

@@ -31,7 +31,7 @@ class InventoryController extends Controller
      */
     public function index(): AnonymousResourceCollection
     {
-        return InventoryStockResource::collection($this->inventory->snapshot());
+        return InventoryStockResource::collection($this->inventory->stockLevels());
     }
 
     /**
@@ -39,7 +39,7 @@ class InventoryController extends Controller
      */
     public function byStage(string $stage): AnonymousResourceCollection
     {
-        return InventoryStockResource::collection($this->inventory->snapshot($this->resolveStage($stage)));
+        return InventoryStockResource::collection($this->inventory->stockLevels($this->resolveStage($stage)));
     }
 
     /**

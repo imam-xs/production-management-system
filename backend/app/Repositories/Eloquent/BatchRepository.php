@@ -12,16 +12,8 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-/**
- * @extends BaseRepository<Batch>
- */
-class BatchRepository extends BaseRepository implements BatchRepositoryInterface
+class BatchRepository implements BatchRepositoryInterface
 {
-    protected function model(): Batch
-    {
-        return new Batch;
-    }
-
     public function paginate(
         ?string $search = null,
         ?int $itemId = null,
@@ -30,7 +22,7 @@ class BatchRepository extends BaseRepository implements BatchRepositoryInterface
         bool $availableOnly = false,
         int $perPage = 15,
     ): LengthAwarePaginator {
-        return $this->query()
+        return Batch::query()
             ->with(['item.unit', 'productionOrder'])
             ->when($itemId !== null, fn (Builder $q): Builder => $q->where('item_id', $itemId))
             ->when(
@@ -50,17 +42,17 @@ class BatchRepository extends BaseRepository implements BatchRepositoryInterface
 
     public function findByIdOrFail(int $id): Batch
     {
-        return $this->query()->with(['item.unit', 'productionOrder'])->findOrFail($id);
+        return Batch::query()->with(['item.unit', 'productionOrder'])->findOrFail($id);
     }
 
     public function create(array $attributes): Batch
     {
-        return $this->persist($attributes);
+        return Batch::query()->create($attributes);
     }
 
     public function lockAvailableFifo(int $itemId): Collection
     {
-        return $this->query()
+        return Batch::query()
             ->where('item_id', $itemId)
             ->where('quantity_remaining', '>', 0)
             // Oldest stock leaves first; id breaks ties deterministically so the
@@ -79,7 +71,7 @@ class BatchRepository extends BaseRepository implements BatchRepositoryInterface
 
     public function hasRemainingStock(Item $item): bool
     {
-        return $this->query()
+        return Batch::query()
             ->where('item_id', $item->id)
             ->where('quantity_remaining', '>', 0)
             ->exists();
@@ -87,14 +79,14 @@ class BatchRepository extends BaseRepository implements BatchRepositoryInterface
 
     public function hasAnyBatch(Item $item): bool
     {
-        return $this->query()
+        return Batch::query()
             ->where('item_id', $item->id)
             ->exists();
     }
 
     public function countProducedOn(DateTimeInterface $date, ?ItemType $type = null): int
     {
-        return $this->query()
+        return Batch::query()
             ->when(
                 $type instanceof ItemType,
                 fn (Builder $q): Builder => $q->whereHas('item', fn (Builder $i): Builder => $i->where('type', $type)),

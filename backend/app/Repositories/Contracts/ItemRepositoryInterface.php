@@ -7,21 +7,9 @@ use App\Models\Item;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-/**
- * Data access for the item catalogue.
- *
- * Every read is type-scoped: the three REST resources (raw materials,
- * semi-finished, finished) are the same queries with a different ItemType, which
- * is what lets one repository back all three controllers without duplication.
- */
 interface ItemRepositoryInterface
 {
     /**
-     * Paginated listing for one production stage.
-     *
-     * Sorting is whitelisted inside the implementation, so an arbitrary
-     * `?sort_by=` value can never reach SQL.
-     *
      * @return LengthAwarePaginator<int, Item>
      */
     public function paginateByType(
@@ -43,10 +31,6 @@ interface ItemRepositoryInterface
      */
     public function findByIdOrFail(int $id): Item;
 
-    /**
-     * Scoped lookup — used so a raw-material endpoint can never return, or
-     * mutate, a finished product that happens to share an id.
-     */
     public function findByIdAndType(int $id, ItemType $type): ?Item;
 
     /**
@@ -62,8 +46,6 @@ interface ItemRepositoryInterface
     public function delete(Item $item): void;
 
     /**
-     * Items whose on-hand quantity has fallen to or below their reorder level.
-     *
      * @return Collection<int, Item>
      */
     public function lowStock(?ItemType $type = null): Collection;
