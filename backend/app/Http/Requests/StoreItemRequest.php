@@ -4,15 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * Validation for creating an item, shared by all three production stages — the
- * field shape is identical, only the stage differs, and the stage is fixed by
- * which concrete controller is handling the request, not by anything the client
- * sends. One class serves all three for exactly that reason.
- *
- * No authorize() override: every write already requires `auth:sanctum`; this
- * app has no per-resource roles to check beyond that.
- */
 class StoreItemRequest extends FormRequest
 {
     /**

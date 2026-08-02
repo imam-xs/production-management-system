@@ -14,9 +14,6 @@ class ReceiveStockRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Scoped to raw materials at the validation layer, not just in
-            // InventoryService — a request for a semi-finished item's id gets
-            // a clean 422 instead of reaching the service at all.
             'item_id' => [
                 'required',
                 'integer',

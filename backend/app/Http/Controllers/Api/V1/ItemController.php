@@ -10,15 +10,6 @@ use App\Services\ItemService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Shared CRUD logic for the three item-stage controllers.
- *
- * Not abstract-method-per-action: Laravel resolves a FormRequest by the exact
- * class named in the controller method's signature, so `store()`/`update()`
- * can't be defined once here with an abstract Request type. Each concrete
- * controller keeps a one-line action method wiring its own Store/Update
- * Request class to these `do*` helpers, which hold the actual logic.
- */
 abstract class ItemController extends Controller
 {
     public function __construct(
@@ -31,10 +22,6 @@ abstract class ItemController extends Controller
     {
         $data = $request->validated();
 
-        // Query-string values always arrive as strings, so they are cast
-        // explicitly rather than relying on PHP's coercion. `is_active`
-        // distinguishes "absent, don't filter" (null) from an explicit
-        // true/false.
         $paginated = $this->items->list(
             $this->itemType(),
             search: $data['search'] ?? null,

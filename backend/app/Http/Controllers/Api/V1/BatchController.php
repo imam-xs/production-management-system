@@ -24,8 +24,8 @@ class BatchController extends Controller
     {
         $data = $request->validated();
 
-        // Explicit casts: query-string values are strings, so they are
-        // converted here rather than relying on PHP's coercion.
+        // explicit casts: query-string values are strings, so they are
+        // converted here rather than relying on PHP's coercion
         $batches = $this->batches->list(
             search: $data['search'] ?? null,
             itemId: isset($data['item_id']) ? (int) $data['item_id'] : null,
@@ -43,11 +43,6 @@ class BatchController extends Controller
         return new BatchResource($this->batches->findOrFail($batch));
     }
 
-    /**
-     * Trace a batch back to the batch(es) that fed it — for a finished batch
-     * this walks finished -> semi-finished -> raw material, exactly what the
-     * assignment calls "batch traceability".
-     */
     public function trace(int $batch): JsonResponse
     {
         $model = $this->batches->findOrFail($batch);
@@ -55,12 +50,6 @@ class BatchController extends Controller
         return ApiResponse::data($this->traceability->traceUpstream($model));
     }
 
-    /**
-     * The reverse question: what did this batch's stock end up in. Not
-     * required by the assignment, but the same repository query already
-     * exists (ProductionOrderRepository::consumptionsOfBatch) and it is a
-     * natural complement to trace().
-     */
     public function traceDownstream(int $batch): JsonResponse
     {
         $model = $this->batches->findOrFail($batch);

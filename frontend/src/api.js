@@ -1,7 +1,7 @@
 // Thin wrapper over fetch. No axios — one less dependency, and the only two
 // things we actually need are a base URL and the bearer token.
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api/v1'
 const TOKEN_KEY = 'pms_token'
 
 export function getToken() {

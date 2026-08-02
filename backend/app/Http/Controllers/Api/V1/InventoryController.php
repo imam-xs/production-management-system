@@ -25,30 +25,19 @@ class InventoryController extends Controller
         private readonly ItemRepositoryInterface $itemsRepository,
     ) {}
 
-    /**
-     * Current inventory across every stage — "view current inventory at every
-     * production stage".
-     */
+    // current inventory across every stage
     public function index(): AnonymousResourceCollection
     {
         return InventoryStockResource::collection($this->inventory->stockLevels());
     }
 
-    /**
-     * Current inventory for one stage only.
-     */
+    // current inventory for one stage only
     public function byStage(string $stage): AnonymousResourceCollection
     {
         return InventoryStockResource::collection($this->inventory->stockLevels($this->resolveStage($stage)));
     }
 
-    /**
-     * Items at or below their reorder level, optionally narrowed to one stage.
-     *
-     * The stage filter exists so a caller can ask a question it can act on: the
-     * sidebar badge sits beside Raw Materials and must not count semi-finished
-     * or finished shortages, or its number will not match the page it labels.
-     */
+    // items at or below their reorder level, optionally narrowed to one stage
     public function lowStock(Request $request): AnonymousResourceCollection
     {
         $type = $request->query('type');
@@ -58,10 +47,7 @@ class InventoryController extends Controller
         );
     }
 
-    /**
-     * Receive a quantity of a raw material into a new purchase batch — the
-     * only way raw-material stock increases.
-     */
+    // receive a quantity of a raw material into a new purchase batch — the only way raw-material stock increases
     public function receive(ReceiveStockRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -77,9 +63,7 @@ class InventoryController extends Controller
         return (new BatchResource($batch->load(['item.unit', 'productionOrder'])))->response()->setStatusCode(201);
     }
 
-    /**
-     * The full inventory ledger for one item — any of the three stages.
-     */
+    // the full inventory ledger for one item — any of the three stages
     public function movements(int $item): AnonymousResourceCollection
     {
         $model = $this->itemsRepository->findByIdOrFail($item);

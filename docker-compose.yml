@@ -97,7 +97,7 @@ services:
       <<: *backend-env
       APP_ROLE: app
     ports:
-      - "8000:80"       # API — http://localhost:8000
+      - "8001:80"       # API — http://localhost:8001 (8000 is used by another local project)
     volumes:
       - ./backend:/var/www/html
     depends_on:
@@ -140,7 +140,7 @@ services:
     restart: unless-stopped
     working_dir: /app
     environment:
-      VITE_API_URL: http://localhost:8000/api/v1
+      VITE_API_URL: http://localhost:8001/api/v1
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     ports:
       - "5173:5173"     # admin UI — http://localhost:5173

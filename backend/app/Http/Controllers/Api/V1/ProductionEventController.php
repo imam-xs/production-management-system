@@ -8,13 +8,10 @@ use App\Services\ProductionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-/**
- * Read-only view of what the RabbitMQ consumer has processed.
- *
- * Rows here are written by the worker process, never by an HTTP request, so this
- * endpoint is the simplest way to demonstrate that the asynchronous path really
- * runs — the admin UI renders it as an event feed.
- */
+// read-only view of what the RabbitMQ consumer has processed
+// rows here are written by the worker process, never by an HTTP request, so this
+// endpoint is the simplest way to demonstrate that the asynchronous path really
+// runs — the admin UI renders it as an event feed
 class ProductionEventController extends Controller
 {
     public function __construct(

@@ -4,12 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * Listing/filter query shape shared by the three item-type controllers. The
- * repository's own column whitelist (see ItemRepository::SORTABLE) is the
- * actual security boundary against an arbitrary `sort_by`; validating it here
- * too just turns a silently-ignored bad value into a clear 422.
- */
 class ItemFilterRequest extends FormRequest
 {
     /**
