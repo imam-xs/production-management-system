@@ -31,7 +31,7 @@ class BatchFactory
 
     public function __construct(
         private readonly BatchRepositoryInterface $batches,
-        private readonly BatchNumberGeneratorInterface $batchNumbers,
+        private readonly BatchNumberGenerator $batchNumbers,
     ) {}
 
     public function make(

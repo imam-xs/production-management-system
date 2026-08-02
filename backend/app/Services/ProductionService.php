@@ -48,7 +48,7 @@ class ProductionService
         private readonly InventoryRepositoryInterface $inventory,
         private readonly InventoryAllocator $allocator,
         private readonly BatchFactory $batchFactory,
-        private readonly OrderNumberGeneratorInterface $orderNumbers,
+        private readonly OrderNumberGenerator $orderNumbers,
     ) {}
 
     /**

@@ -14,8 +14,13 @@ use DateTimeInterface;
  * counter across raw/semi/finished. The number is a candidate, not a
  * guarantee — see BatchFactory for how a collision under concurrent receipts
  * is handled.
+ *
+ * A concrete class rather than an interface: there is exactly one numbering
+ * scheme and nothing selects between alternatives. Should a second one ever be
+ * needed, extracting the interface then is a smaller change than carrying an
+ * abstraction that only ever has one implementation.
  */
-class BatchNumberGenerator implements BatchNumberGeneratorInterface
+class BatchNumberGenerator
 {
     public function __construct(
         private readonly BatchRepositoryInterface $batches,

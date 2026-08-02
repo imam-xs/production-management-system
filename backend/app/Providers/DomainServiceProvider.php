@@ -7,29 +7,22 @@ use App\Messaging\MessagePublisherInterface;
 use App\Messaging\NullPublisher;
 use App\Messaging\RabbitMqConnector;
 use App\Messaging\RabbitMqPublisher;
-use App\Services\BatchNumberGenerator;
-use App\Services\BatchNumberGeneratorInterface;
-use App\Services\OrderNumberGenerator;
-use App\Services\OrderNumberGeneratorInterface;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 
 /**
  * Bindings for the domain services and the message bus.
  *
- * Most of App\Services is resolved by the container as concrete classes —
- * controllers are their only consumer and the repository interfaces beneath
- * them already provide the seam that matters. Only three things are bound to
- * interfaces here, each because a second implementation genuinely exists or is
- * genuinely needed: the two numbering schemes, and the publisher.
+ * App\Services is resolved by the container as concrete classes — controllers
+ * are their only consumer and the repository interfaces beneath them already
+ * provide the seam that matters. Exactly one thing is bound to an interface
+ * here: the publisher, because three implementations genuinely exist and the
+ * choice between them is configuration, not code.
  */
 class DomainServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(BatchNumberGeneratorInterface::class, BatchNumberGenerator::class);
-        $this->app->singleton(OrderNumberGeneratorInterface::class, OrderNumberGenerator::class);
-
         // One connector per process. The publisher (API) and the consumer
         // (worker) each get their own instance in their own process, but within
         // a process the AMQP connection is reused rather than reopened.
