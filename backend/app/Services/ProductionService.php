@@ -20,6 +20,7 @@ use App\Repositories\Contracts\BillOfMaterialRepositoryInterface;
 use App\Repositories\Contracts\InventoryRepositoryInterface;
 use App\Repositories\Contracts\ItemRepositoryInterface;
 use App\Repositories\Contracts\ProductionOrderRepositoryInterface;
+use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -34,8 +35,7 @@ class ProductionService
         private readonly ProductionOrderRepositoryInterface $orders,
         private readonly InventoryRepositoryInterface $inventory,
         private readonly InventoryAllocator $allocator,
-        private readonly BatchFactory $batchFactory,
-        private readonly OrderNumberGenerator $orderNumbers,
+        private readonly BatchService $batchService,
     ) {}
 
     /**
@@ -95,13 +95,22 @@ class ProductionService
         }
 
         return $this->orders->create([
-            'order_number' => $this->orderNumbers->generate(now()),
+            'order_number' => $this->nextOrderNumber(now()),
             'stage' => $stage,
             'output_item_id' => $outputItem->id,
             'planned_quantity' => $plannedQuantity,
             'status' => ProductionOrderStatus::Pending,
             'created_by' => $createdBy?->id,
         ]);
+    }
+
+    // PO-Ymd-sequence, e.g. PO-20260730-0001 — a candidate, not a guarantee:
+    // the unique index on order_number is what actually enforces uniqueness
+    private function nextOrderNumber(DateTimeInterface $createdAt): string
+    {
+        $sequence = $this->orders->countCreatedOn($createdAt) + 1;
+
+        return sprintf('PO-%s-%04d', $createdAt->format('Ymd'), $sequence);
     }
 
     // execute a pending order: consume its recipe's inputs and produce one output batch
@@ -181,7 +190,7 @@ class ProductionService
     {
         $quantity = (string) $order->planned_quantity;
 
-        $outputBatch = $this->batchFactory->make(
+        $outputBatch = $this->batchService->make(
             $outputItem,
             $quantity,
             BatchOrigin::Production,

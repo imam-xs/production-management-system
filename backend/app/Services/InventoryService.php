@@ -29,7 +29,7 @@ class InventoryService
 {
     public function __construct(
         private readonly InventoryRepositoryInterface $inventory,
-        private readonly BatchFactory $batchFactory,
+        private readonly BatchService $batchService,
     ) {}
 
     /**
@@ -63,7 +63,7 @@ class InventoryService
         return DB::transaction(function () use ($item, $quantity, $producedAt, $note): Batch {
             $producedAt ??= now();
 
-            $batch = $this->batchFactory->make($item, $quantity, BatchOrigin::Purchase, null, $producedAt);
+            $batch = $this->batchService->make($item, $quantity, BatchOrigin::Purchase, null, $producedAt);
 
             $stock = $this->inventory->lockStockFor($item);
             $balance = $this->inventory->adjustStock($stock, $quantity);
