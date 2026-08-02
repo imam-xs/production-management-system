@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ItemType;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\IndexItemRequest;
+use App\Http\Requests\ItemFilterRequest;
 use App\Http\Resources\ItemResource;
 use App\Services\ItemService;
 use Illuminate\Http\JsonResponse;
@@ -27,7 +27,7 @@ abstract class ItemController extends Controller
 
     abstract protected function itemType(): ItemType;
 
-    protected function doIndex(IndexItemRequest $request): AnonymousResourceCollection
+    protected function doIndex(ItemFilterRequest $request): AnonymousResourceCollection
     {
         $data = $request->validated();
 

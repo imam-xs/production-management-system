@@ -7,7 +7,7 @@ use App\Enums\ItemType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class IndexBatchRequest extends FormRequest
+class BatchFilterRequest extends FormRequest
 {
     /**
      * @return array<string, mixed>

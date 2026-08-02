@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\IndexProductionOrderRequest;
+use App\Http\Requests\ProductionOrderFilterRequest;
 use App\Http\Requests\StoreProductionOrderRequest;
 use App\Http\Resources\ProductionOrderResource;
 use App\Repositories\Contracts\ItemRepositoryInterface;
@@ -20,8 +20,8 @@ class ProductionOrderController extends Controller
         private readonly ItemRepositoryInterface $items,
     ) {}
 
-    //production history track complete production history
-    public function index(IndexProductionOrderRequest $request): AnonymousResourceCollection
+    // production history track complete production history
+    public function index(ProductionOrderFilterRequest $request): AnonymousResourceCollection
     {
         $data = $request->validated();
 
@@ -42,8 +42,7 @@ class ProductionOrderController extends Controller
         return new ProductionOrderResource($this->production->findOrFail($productionOrder));
     }
 
-   
-     //plan a run — stage and inputs are derived server-side, not supplied by the client. inventory is untouched until execute()
+    // plan a run — stage and inputs are derived server-side, not supplied by the client. inventory is untouched until execute()
     public function store(StoreProductionOrderRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -58,7 +57,7 @@ class ProductionOrderController extends Controller
         return (new ProductionOrderResource($order))->response()->setStatusCode(201);
     }
 
-    //execute a pending order: consume its recipe's inputs, produce one output batch
+    // execute a pending order: consume its recipe's inputs, produce one output batch
     public function execute(int $productionOrder): ProductionOrderResource
     {
         $order = $this->production->findOrFail($productionOrder);

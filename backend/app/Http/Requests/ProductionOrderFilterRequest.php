@@ -7,7 +7,7 @@ use App\Enums\ProductionStage;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class IndexProductionOrderRequest extends FormRequest
+class ProductionOrderFilterRequest extends FormRequest
 {
     /**
      * @return array<string, mixed>

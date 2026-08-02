@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ItemType;
-use App\Http\Requests\IndexItemRequest;
+use App\Http\Requests\ItemFilterRequest;
 use App\Http\Requests\StoreItemRequest;
 use App\Http\Requests\UpdateItemRequest;
 use App\Http\Resources\ItemResource;
@@ -17,7 +17,7 @@ class RawMaterialController extends ItemController
         return ItemType::Raw;
     }
 
-    public function index(IndexItemRequest $request): AnonymousResourceCollection
+    public function index(ItemFilterRequest $request): AnonymousResourceCollection
     {
         return $this->doIndex($request);
     }

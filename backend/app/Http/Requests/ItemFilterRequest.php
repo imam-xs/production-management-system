@@ -10,7 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
  * actual security boundary against an arbitrary `sort_by`; validating it here
  * too just turns a silently-ignored bad value into a clear 422.
  */
-class IndexItemRequest extends FormRequest
+class ItemFilterRequest extends FormRequest
 {
     /**
      * @return array<string, mixed>

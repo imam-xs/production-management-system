@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\BatchOrigin;
 use App\Enums\ItemType;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\IndexBatchRequest;
+use App\Http\Requests\BatchFilterRequest;
 use App\Http\Resources\BatchResource;
 use App\Http\Responses\ApiResponse;
 use App\Services\BatchService;
@@ -20,7 +20,7 @@ class BatchController extends Controller
         private readonly TraceabilityService $traceability,
     ) {}
 
-    public function index(IndexBatchRequest $request): AnonymousResourceCollection
+    public function index(BatchFilterRequest $request): AnonymousResourceCollection
     {
         $data = $request->validated();
 
