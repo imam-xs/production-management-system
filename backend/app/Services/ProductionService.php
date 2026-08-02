@@ -7,7 +7,6 @@ use App\Enums\MovementType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
 use App\Events\ProductionCompleted;
-use App\Exceptions\InsufficientInventoryException;
 use App\Exceptions\InvalidProductionStageException;
 use App\Exceptions\ItemRetiredException;
 use App\Exceptions\ProductionOrderNotPendingException;
@@ -25,6 +24,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+
 class ProductionService
 {
     public function __construct(
@@ -38,7 +38,9 @@ class ProductionService
         private readonly OrderNumberGenerator $orderNumbers,
     ) {}
 
-
+    /**
+     * @return LengthAwarePaginator<int, ProductionOrder>
+     */
     public function list(
         ?string $search = null,
         ?ProductionStage $stage = null,
@@ -49,14 +51,16 @@ class ProductionService
         return $this->orders->paginate($search, $stage, $status, $outputItemId, $perPage);
     }
 
-
     public function findOrFail(int $id): ProductionOrder
     {
         return $this->orders->findByIdOrFail($id);
     }
 
-  
-    // the log the RabbitMQ consumer writes
+    /**
+     * The log the RabbitMQ consumer writes.
+     *
+     * @return LengthAwarePaginator<int, ProductionEventLog>
+     */
     public function eventLog(int $perPage = 15): LengthAwarePaginator
     {
         return ProductionEventLog::query()
@@ -65,9 +69,8 @@ class ProductionService
             ->paginate($perPage);
     }
 
-    
-     //plan a production run which stage, how much, of what — without touching inventory
-     //inventory is only ever moved by execute()
+    // plan a production run which stage, how much, of what — without touching inventory
+    // inventory is only ever moved by execute()
 
     public function createOrder(Item $outputItem, string $plannedQuantity, ?User $createdBy = null): ProductionOrder
     {
@@ -92,18 +95,17 @@ class ProductionService
         }
 
         return $this->orders->create([
-            'order_number'     => $this->orderNumbers->generate(now()),
-            'stage'            => $stage,
-            'output_item_id'   => $outputItem->id,
+            'order_number' => $this->orderNumbers->generate(now()),
+            'stage' => $stage,
+            'output_item_id' => $outputItem->id,
             'planned_quantity' => $plannedQuantity,
-            'status'           => ProductionOrderStatus::Pending,
-            'created_by'       => $createdBy?->id,
+            'status' => ProductionOrderStatus::Pending,
+            'created_by' => $createdBy?->id,
         ]);
     }
 
-   
-     //execute a pending order: consume its recipe's inputs and produce one output batch
-   
+    // execute a pending order: consume its recipe's inputs and produce one output batch
+
     public function execute(ProductionOrder $order): ProductionOrder
     {
         return DB::transaction(function () use ($order): ProductionOrder {
@@ -123,7 +125,7 @@ class ProductionService
         }, attempts: 3);
     }
 
-    //lock the order row and confirm it is still pending, the caller's copy may be stale
+    // lock the order row and confirm it is still pending, the caller's copy may be stale
 
     private function lockPendingOrder(ProductionOrder $order): ProductionOrder
     {
@@ -140,8 +142,11 @@ class ProductionService
         return $locked;
     }
 
-
-    //plan which batches will supply each input
+    /**
+     * Plan which batches will supply each input — nothing is written yet.
+     *
+     * @return list<array{item: Item, plan: list<array{batch: Batch, quantity: string}>}>
+     */
     private function allocateInputs(ProductionOrder $order, Item $outputItem): array
     {
         $allocations = [];
@@ -158,7 +163,11 @@ class ProductionService
         return $allocations;
     }
 
-    //consume the allocated inputs
+    /**
+     * Consume the allocated inputs.
+     *
+     * @param  list<array{item: Item, plan: list<array{batch: Batch, quantity: string}>}>  $allocations
+     */
     private function consumeInputs(ProductionOrder $order, array $allocations): void
     {
         foreach ($allocations as $allocation) {
@@ -166,7 +175,7 @@ class ProductionService
         }
     }
 
-    ///create the output batch, add it to stock and record the matching ledger row
+    // /create the output batch, add it to stock and record the matching ledger row
 
     private function produceOutput(ProductionOrder $order, Item $outputItem): Batch
     {
@@ -195,8 +204,12 @@ class ProductionService
         return $outputBatch;
     }
 
-  //deduct one input's planned quantity from its batches, recording a consumption edge and a ledger row for each
-
+    /**
+     * Deduct one input's planned quantity from its batches, recording a
+     * consumption edge and a ledger row for each.
+     *
+     * @param  list<array{batch: Batch, quantity: string}>  $plan
+     */
     private function consumeAllocation(ProductionOrder $order, Item $inputItem, array $plan): void
     {
         $stock = $this->inventory->lockStockFor($inputItem);

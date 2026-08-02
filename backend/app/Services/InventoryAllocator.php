@@ -7,17 +7,9 @@ use App\Models\Batch;
 use App\Models\Item;
 use App\Repositories\Contracts\BatchRepositoryInterface;
 
-/**
- * Plans which batches of an item to draw from to cover a required quantity.
- *
- * One reason to change: the FIFO allocation algorithm. Kept apart from
- * ProductionService so the "which batches, how much of each" question is
- * testable and readable on its own, separate from the transaction that acts on
- * the plan.
- *
- * Must be called inside a transaction — `lockAvailableFifo` takes row locks
- * that only make sense as part of one.
- */
+// plans which batches cover a required quantity, oldest first
+// must run inside a transaction — lockAvailableFifo takes row locks
+
 class InventoryAllocator
 {
     public function __construct(
@@ -26,42 +18,36 @@ class InventoryAllocator
 
     /**
      * @return list<array{batch: Batch, quantity: string}>
-     *
-     * @throws InsufficientInventoryException
      */
     public function allocate(Item $item, string $requiredQuantity): array
     {
         $available = $this->batches->lockAvailableFifo($item->id);
 
-        $remaining = $requiredQuantity;
+        // summed from the locked rows — a separate SELECT SUM would read a stale snapshot
         $totalAvailable = '0';
+        foreach ($available as $batch) {
+            $totalAvailable = bcadd($totalAvailable, (string) $batch->quantity_remaining, 4);
+        }
+
+        if (bccomp($totalAvailable, $requiredQuantity, 4) < 0) {
+            throw InsufficientInventoryException::forItem($item, $requiredQuantity, $totalAvailable);
+        }
+
         $plan = [];
+        $remaining = $requiredQuantity;
 
         foreach ($available as $batch) {
-            // Accumulated from the locked rows themselves rather than from a
-            // separate SUM query. That matters under concurrency: InnoDB's
-            // default REPEATABLE READ isolation means a *non-locking* read
-            // returns the snapshot taken when this transaction began, while the
-            // locking read above returns the latest committed data. A fresh
-            // SELECT SUM here would therefore report pre-contention stock and
-            // produce a nonsensical error like "required 22.5, available 27.5"
-            // on the very request that just lost the race.
-            $totalAvailable = bcadd($totalAvailable, (string) $batch->quantity_remaining, 4);
-
             if (bccomp($remaining, '0', 4) <= 0) {
-                continue;
+                break;
             }
 
+            // take whichever is smaller: what this batch holds, or what is left to cover
             $take = bccomp((string) $batch->quantity_remaining, $remaining, 4) < 0
                 ? (string) $batch->quantity_remaining
                 : $remaining;
 
             $plan[] = ['batch' => $batch, 'quantity' => $take];
             $remaining = bcsub($remaining, $take, 4);
-        }
-
-        if (bccomp($remaining, '0', 4) > 0) {
-            throw InsufficientInventoryException::forItem($item, $requiredQuantity, $totalAvailable);
         }
 
         return $plan;
