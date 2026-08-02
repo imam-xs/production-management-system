@@ -20,15 +20,12 @@ class ProductionOrderController extends Controller
         private readonly ItemRepositoryInterface $items,
     ) {}
 
-    /**
-     * Production history — "track complete production history".
-     */
+    //production history track complete production history
     public function index(IndexProductionOrderRequest $request): AnonymousResourceCollection
     {
         $data = $request->validated();
 
-        // Explicit casts: query-string values are strings, so they are
-        // converted here rather than relying on PHP's coercion.
+        // query-string values are strings
         $orders = $this->production->list(
             search: $data['search'] ?? null,
             stage: isset($data['stage']) ? ProductionStage::from($data['stage']) : null,
@@ -45,10 +42,8 @@ class ProductionOrderController extends Controller
         return new ProductionOrderResource($this->production->findOrFail($productionOrder));
     }
 
-    /**
-     * Plan a run — stage and inputs are derived server-side, not supplied by
-     * the client. Inventory is untouched until execute().
-     */
+   
+     //plan a run — stage and inputs are derived server-side, not supplied by the client. inventory is untouched until execute()
     public function store(StoreProductionOrderRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -63,21 +58,12 @@ class ProductionOrderController extends Controller
         return (new ProductionOrderResource($order))->response()->setStatusCode(201);
     }
 
-    /**
-     * Execute a pending order: consume its recipe's inputs, produce one output
-     * batch. The endpoint the assignment calls "production execution (batch
-     * creation)".
-     */
+    //execute a pending order: consume its recipe's inputs, produce one output batch
     public function execute(int $productionOrder): ProductionOrderResource
     {
         $order = $this->production->findOrFail($productionOrder);
         $completed = $this->production->execute($order);
 
-        // execute() re-fetches the order via lockById(), which deliberately
-        // skips eager loading (a locking read should touch exactly the row it
-        // locks). Re-fetching here through the fully-loaded path is what lets
-        // the response include the output batch and consumption edges instead
-        // of silently omitting them.
         return new ProductionOrderResource($this->production->findOrFail($completed->id));
     }
 }
