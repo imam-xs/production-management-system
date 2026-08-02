@@ -43,17 +43,4 @@ class BillOfMaterialRepository extends BaseRepository implements BillOfMaterialR
             ->orWhere('input_item_id', $item->id)
             ->exists();
     }
-
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public function create(array $attributes): BillOfMaterial
-    {
-        return $this->persist($attributes);
-    }
-
-    public function delete(BillOfMaterial $line): void
-    {
-        $line->delete();
-    }
 }

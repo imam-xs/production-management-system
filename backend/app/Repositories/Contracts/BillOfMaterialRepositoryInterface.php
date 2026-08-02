@@ -33,11 +33,4 @@ interface BillOfMaterialRepositoryInterface
      * so deletion has to refuse while the reference exists.
      */
     public function isReferenced(Item $item): bool;
-
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public function create(array $attributes): BillOfMaterial;
-
-    public function delete(BillOfMaterial $line): void;
 }
