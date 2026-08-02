@@ -17,29 +17,11 @@ enum ProductionOrderStatus: string
     case Failed = 'failed';
     case Cancelled = 'cancelled';
 
-    public function label(): string
-    {
-        return ucfirst($this->value);
-    }
-
-    /**
-     * Terminal states can never transition again.
-     */
-    public function isTerminal(): bool
-    {
-        return $this !== self::Pending;
-    }
-
     /**
      * Only a pending order may be executed — this is what makes a repeated
      * execute call a 409 rather than a double stock deduction.
      */
     public function canBeExecuted(): bool
-    {
-        return $this === self::Pending;
-    }
-
-    public function canBeCancelled(): bool
     {
         return $this === self::Pending;
     }

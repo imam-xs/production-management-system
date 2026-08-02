@@ -48,22 +48,9 @@ class BatchRepository extends BaseRepository implements BatchRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function findById(int $id): ?Batch
-    {
-        return $this->query()->with(['item.unit', 'productionOrder'])->find($id);
-    }
-
     public function findByIdOrFail(int $id): Batch
     {
         return $this->query()->with(['item.unit', 'productionOrder'])->findOrFail($id);
-    }
-
-    public function findByNumber(string $batchNumber): ?Batch
-    {
-        return $this->query()
-            ->with(['item.unit', 'productionOrder'])
-            ->where('batch_number', $batchNumber)
-            ->first();
     }
 
     public function create(array $attributes): Batch

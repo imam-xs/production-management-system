@@ -84,11 +84,6 @@ class ItemRepository extends BaseRepository implements ItemRepositoryInterface
             ->get();
     }
 
-    public function findById(int $id): ?Item
-    {
-        return $this->readQuery()->find($id);
-    }
-
     public function findByIdOrFail(int $id): Item
     {
         return $this->readQuery()->findOrFail($id);
@@ -99,11 +94,6 @@ class ItemRepository extends BaseRepository implements ItemRepositoryInterface
         return $this->readQuery()
             ->where('type', $type)
             ->find($id);
-    }
-
-    public function findBySku(string $sku): ?Item
-    {
-        return $this->query()->where('sku', $sku)->first();
     }
 
     public function create(array $attributes): Item

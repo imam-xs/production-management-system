@@ -16,15 +16,6 @@ enum ItemType: string
     case SemiFinished = 'semi_finished';
     case Finished = 'finished';
 
-    public function label(): string
-    {
-        return match ($this) {
-            self::Raw => 'Raw Material',
-            self::SemiFinished => 'Semi-Finished Product',
-            self::Finished => 'Finished Product',
-        };
-    }
-
     /**
      * Prefix used when generating batch numbers for this stage.
      */
@@ -35,15 +26,6 @@ enum ItemType: string
             self::SemiFinished => 'SF',
             self::Finished => 'FG',
         };
-    }
-
-    /**
-     * Raw materials enter inventory by purchase receipt; everything else can
-     * only come into existence through a production run.
-     */
-    public function isProduced(): bool
-    {
-        return $this !== self::Raw;
     }
 
     /**

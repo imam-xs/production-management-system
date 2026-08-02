@@ -28,14 +28,10 @@ interface BatchRepositoryInterface
         int $perPage = 15,
     ): LengthAwarePaginator;
 
-    public function findById(int $id): ?Batch;
-
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
     public function findByIdOrFail(int $id): Batch;
-
-    public function findByNumber(string $batchNumber): ?Batch;
 
     /**
      * @param  array<string, mixed>  $attributes

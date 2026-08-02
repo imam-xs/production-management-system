@@ -44,26 +44,11 @@ class ProductionOrderRepository extends BaseRepository implements ProductionOrde
             ->paginate($perPage);
     }
 
-    public function findById(int $id): ?ProductionOrder
-    {
-        return $this->query()
-            ->with(['outputItem.unit', 'outputBatch', 'creator', 'consumptions.inputBatch.item'])
-            ->find($id);
-    }
-
     public function findByIdOrFail(int $id): ProductionOrder
     {
         return $this->query()
             ->with(['outputItem.unit', 'outputBatch', 'creator', 'consumptions.inputBatch.item'])
             ->findOrFail($id);
-    }
-
-    public function findByNumber(string $orderNumber): ?ProductionOrder
-    {
-        return $this->query()
-            ->with(['outputItem.unit', 'outputBatch', 'creator'])
-            ->where('order_number', $orderNumber)
-            ->first();
     }
 
     public function lockById(int $id): ?ProductionOrder
@@ -83,14 +68,6 @@ class ProductionOrderRepository extends BaseRepository implements ProductionOrde
             'status' => ProductionOrderStatus::Completed,
             'produced_quantity' => $producedQuantity,
             'completed_at' => now(),
-        ]);
-    }
-
-    public function markFailed(ProductionOrder $order, string $reason): ProductionOrder
-    {
-        return $this->applyUpdate($order, [
-            'status' => ProductionOrderStatus::Failed,
-            'failure_reason' => $reason,
         ]);
     }
 

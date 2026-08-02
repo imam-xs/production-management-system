@@ -38,8 +38,6 @@ interface ItemRepositoryInterface
      */
     public function allOfType(ItemType $type): Collection;
 
-    public function findById(int $id): ?Item;
-
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
@@ -50,8 +48,6 @@ interface ItemRepositoryInterface
      * mutate, a finished product that happens to share an id.
      */
     public function findByIdAndType(int $id, ItemType $type): ?Item;
-
-    public function findBySku(string $sku): ?Item;
 
     /**
      * @param  array<string, mixed>  $attributes

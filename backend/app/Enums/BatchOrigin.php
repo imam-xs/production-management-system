@@ -14,14 +14,6 @@ enum BatchOrigin: string
     case Purchase = 'purchase';
     case Production = 'production';
 
-    public function label(): string
-    {
-        return match ($this) {
-            self::Purchase => 'Purchased / Received',
-            self::Production => 'Manufactured In-House',
-        };
-    }
-
     public function isTraceable(): bool
     {
         return $this === self::Production;

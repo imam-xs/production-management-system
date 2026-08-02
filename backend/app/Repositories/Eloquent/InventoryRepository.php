@@ -102,13 +102,4 @@ class InventoryRepository extends BaseRepository implements InventoryRepositoryI
             ->orderByDesc('id')
             ->paginate($perPage);
     }
-
-    public function ledgerBalance(Item $item): string
-    {
-        $sum = InventoryMovement::query()
-            ->where('item_id', $item->id)
-            ->sum('quantity');
-
-        return (string) $sum;
-    }
 }

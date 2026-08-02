@@ -32,14 +32,10 @@ interface ProductionOrderRepositoryInterface
         int $perPage = 15,
     ): LengthAwarePaginator;
 
-    public function findById(int $id): ?ProductionOrder;
-
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
     public function findByIdOrFail(int $id): ProductionOrder;
-
-    public function findByNumber(string $orderNumber): ?ProductionOrder;
 
     /**
      * Fetch an order **locked for update**.
@@ -56,8 +52,6 @@ interface ProductionOrderRepositoryInterface
     public function create(array $attributes): ProductionOrder;
 
     public function markCompleted(ProductionOrder $order, string $producedQuantity): ProductionOrder;
-
-    public function markFailed(ProductionOrder $order, string $reason): ProductionOrder;
 
     /**
      * Record that an order consumed part of an input batch — one traceability

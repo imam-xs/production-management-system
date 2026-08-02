@@ -66,10 +66,4 @@ interface InventoryRepositoryInterface
      * @return LengthAwarePaginator<int, InventoryMovement>
      */
     public function paginateMovements(Item $item, int $perPage = 15): LengthAwarePaginator;
-
-    /**
-     * Sum of the ledger for an item — used to verify the cached balance rather
-     * than to serve reads.
-     */
-    public function ledgerBalance(Item $item): string;
 }

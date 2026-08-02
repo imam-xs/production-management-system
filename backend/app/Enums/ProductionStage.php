@@ -15,14 +15,6 @@ enum ProductionStage: string
     case RawToSemiFinished = 'raw_to_semi_finished';
     case SemiFinishedToFinished = 'semi_finished_to_finished';
 
-    public function label(): string
-    {
-        return match ($this) {
-            self::RawToSemiFinished => 'Raw Material → Semi-Finished',
-            self::SemiFinishedToFinished => 'Semi-Finished → Finished',
-        };
-    }
-
     public function inputType(): ItemType
     {
         return match ($this) {

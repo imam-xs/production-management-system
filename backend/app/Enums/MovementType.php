@@ -16,16 +16,6 @@ enum MovementType: string
     case ProductionOutput = 'production_output';
     case Adjustment = 'adjustment';
 
-    public function label(): string
-    {
-        return match ($this) {
-            self::Receipt => 'Raw Material Receipt',
-            self::ProductionInput => 'Consumed by Production',
-            self::ProductionOutput => 'Produced by Production',
-            self::Adjustment => 'Manual Adjustment',
-        };
-    }
-
     /**
      * Direction this movement applies to stock. Adjustments carry their own
      * sign because they can go either way.
@@ -37,11 +27,6 @@ enum MovementType: string
             self::ProductionInput => -1,
             self::Adjustment => 0,
         };
-    }
-
-    public function isIncoming(): bool
-    {
-        return $this->sign() > 0;
     }
 
     /**
