@@ -94,14 +94,13 @@ export default function EventLog() {
         )}
       </Panel>
 
-      <Panel title="How to read this" padded>
+      <Panel title="Where these rows come from" padded>
         <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
-          The API publishes a message to the <span className="mono">production.events</span> exchange
-          after a production run commits, then returns immediately. A separate
-          worker process (<span className="mono">php artisan rabbitmq:consume</span>) picks the message
-          up and writes these rows. Stop the worker container and execute an order:
-          the order still completes and stock still moves, but no row appears here
-          until the worker is running again.
+          These rows are not written by the API. It drops a message on RabbitMQ
+          and replies right away; the worker container picks the message up a
+          moment later and writes the row. Try it: stop the worker, then run an
+          order. The order works fine, but nothing shows up here until you start
+          the worker again.
         </p>
       </Panel>
     </>

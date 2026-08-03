@@ -248,7 +248,7 @@ export default function Items({ endpoint, title, noun }) {
           detail={
             confirming.can_delete
               ? 'Nothing depends on this item — it has never been produced and no recipe refers to it.'
-              : 'It holds stock, appears in production history, or a recipe names it — deleting it would break the traceability chain that already points at it. To take it out of circulation, press Edit and uncheck “Active”.'
+              : 'It holds stock, is named by a recipe, or appears in production history. To retire it instead, press Edit and uncheck “Active”.'
           }
           confirmLabel="Delete"
           cancelLabel={confirming.can_delete ? 'Cancel' : 'Close'}
