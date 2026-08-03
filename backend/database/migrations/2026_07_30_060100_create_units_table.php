@@ -4,12 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Units of measure.
- *
- * Extracted into its own table rather than stored as a string on `items` so a
- * unit is defined once and quantities across the system are comparable.
- */
 return new class extends Migration
 {
     public function up(): void

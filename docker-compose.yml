@@ -38,7 +38,7 @@ x-backend-env: &backend-env
   RABBITMQ_PORT: 5672
   RABBITMQ_USER: pms_user
   RABBITMQ_PASSWORD: pms_secret
-  MESSAGE_PUBLISHER: rabbitmq
+  QUEUE_CONNECTION: rabbitmq
 
 services:
 
@@ -123,7 +123,7 @@ services:
       <<: *backend-env
       APP_ROLE: worker
     # The consumer that processes production events asynchronously.
-    command: ["php", "artisan", "rabbitmq:consume"]
+    command: ["php", "artisan", "queue:work", "rabbitmq", "--tries=3", "--max-time=3600"]
     volumes:
       - ./backend:/var/www/html
     depends_on:

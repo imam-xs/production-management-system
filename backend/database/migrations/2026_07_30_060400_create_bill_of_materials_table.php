@@ -3,15 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-
-/**
- * Recipe: how much of each input one unit of an output requires.
- *
- * This is what turns "prevent production if inventory is insufficient" into a
- * calculable rule — required quantity is `quantity_per_unit * planned_quantity`
- * rather than something the API caller asserts. It also means a production
- * request only needs an output item and a quantity; the inputs are derived.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -23,7 +14,7 @@ return new class extends Migration
             $table->decimal('quantity_per_unit', 15, 4);
             $table->timestamps();
 
-            // One line per input per output.
+            // one line per input per output
             $table->unique(['output_item_id', 'input_item_id']);
         });
     }

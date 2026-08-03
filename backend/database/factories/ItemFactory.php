@@ -30,10 +30,6 @@ class ItemFactory extends Factory
         ];
     }
 
-    /**
-     * Named `rawMaterial` rather than `raw` because Factory::raw() already
-     * exists in the base class and means something entirely different.
-     */
     public function rawMaterial(): self
     {
         return $this->state(['type' => ItemType::Raw]);
