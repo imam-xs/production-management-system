@@ -52,7 +52,7 @@ export default function Dashboard() {
       </div>
 
       {STAGES.map((s) => (
-        <Panel title={`${s.label} — current inventory`} key={s.key}>
+        <Panel title={`${s.label} inventory`} key={s.key}>
           <div className="table-wrap">
             <table>
               <thead>

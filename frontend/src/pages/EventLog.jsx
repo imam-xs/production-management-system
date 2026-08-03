@@ -2,12 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api.js'
 import { Alert, Empty, Loading, Panel, qty, when } from '../components/ui.jsx'
 
-/**
- * Every row on this page was written by the RabbitMQ consumer running in a
- * separate process, never by an HTTP request. That makes this the clearest
- * evidence that the event-driven path actually works: execute a production order
- * on the Production page, come back here, and the row appears on its own.
- */
+// every row on this page was written by the RabbitMQ consumer running in a separate process, never by an HTTP request
 export default function EventLog() {
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
@@ -55,8 +50,8 @@ export default function EventLog() {
           <Loading />
         ) : rows.length === 0 ? (
           <Empty>
-            No events processed yet. Execute a production order — the worker will
-            record it here within a second or two.
+            No events processed yet. Execute a production order and the worker
+            will record it here within a second or two.
           </Empty>
         ) : (
           <div className="table-wrap">

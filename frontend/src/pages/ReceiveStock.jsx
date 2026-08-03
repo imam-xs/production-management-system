@@ -2,11 +2,6 @@ import { useEffect, useState } from 'react'
 import { api, fieldErrors } from '../api.js'
 import { Alert, Empty, Field, Loading, Panel, Pill, qty, when } from '../components/ui.jsx'
 
-/**
- * Receiving raw material is the only way stock enters the system from outside.
- * Semi-finished and finished stock can only ever be created by a production run,
- * which is why this form only offers raw materials.
- */
 export default function ReceiveStock() {
   const [materials, setMaterials] = useState(null)
   const [recent, setRecent] = useState([])
@@ -19,7 +14,7 @@ export default function ReceiveStock() {
   async function load() {
     try {
       const [items, batches] = await Promise.all([
-        // Active only — a retired material must not be receivable either.
+        // active only,a retired material must not be receivable either
         api.get('/raw-materials?per_page=100&is_active=1'),
         api.get('/batches?item_type=raw&origin=purchase&per_page=10'),
       ])

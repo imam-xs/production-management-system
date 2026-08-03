@@ -3,13 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api.js'
 import { Alert, Loading, Panel, Pill, qty, when } from '../components/ui.jsx'
 
-/**
- * Renders the recursive trace tree the API returns.
- *
- * A finished batch shows the semi-finished batches it consumed, and each of
- * those shows the raw material batches behind it — the component recurses on the
- * same shape at every level because the API's tree is stage-agnostic.
- */
+// renders the recursive trace tree the API returns
 function TraceNode({ node, depth = 0 }) {
   return (
     <div className={`tree-node ${depth === 0 ? 'root' : ''}`}>
@@ -47,7 +41,7 @@ function TraceNode({ node, depth = 0 }) {
 
       {node.origin === 'purchase' && depth > 0 && (
         <div className="muted" style={{ fontSize: 12, marginLeft: 14, paddingBottom: 6 }}>
-          ● originating raw material — trace ends here
+          ● originating raw material, so the trace ends here
         </div>
       )}
     </div>
@@ -82,7 +76,7 @@ export default function Trace() {
   return (
     <>
       <Panel
-        title={`Traceability — ${tree.batch_number}`}
+        title={`Traceability: ${tree.batch_number}`}
         actions={
           <>
             <button className={view === 'upstream' ? 'primary sm' : 'sm'} onClick={() => setView('upstream')}>

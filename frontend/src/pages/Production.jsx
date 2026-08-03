@@ -17,11 +17,6 @@ export default function Production() {
   const [recipe, setRecipe] = useState([])
 
   async function load() {
-    // Deliberately does NOT clear `error` first. execute() sets the rejection
-    // message and then calls load() to refresh the table — clearing here would
-    // wipe that message before it ever rendered, which is exactly the bug this
-    // comment exists to prevent regressing. Each action handler clears the
-    // banner itself before starting new work.
     try {
       // The API is paginated; the demo dataset fits one page, so the UI asks
       // for a large per_page rather than rendering pager controls.
@@ -40,13 +35,10 @@ export default function Production() {
     load()
   }, [filters.stage, filters.status])
 
-  // Only semi-finished and finished items can be produced; raw materials are
+  // only semi-finished and finished items can be produced; raw materials are
   // received, never manufactured. The API enforces this too — this just avoids
-  // offering an option that would be rejected.
+  // offering an option that would be rejected
   useEffect(() => {
-    // is_active=1: a retired product must not be offered for a new run. That is
-    // the whole point of retiring one — it cannot be deleted once it has been
-    // produced, so this is how it leaves circulation.
     Promise.all([
       api.get('/semi-finished-products?per_page=100&is_active=1'),
       api.get('/finished-products?per_page=100&is_active=1'),
@@ -55,9 +47,7 @@ export default function Production() {
       .catch(() => {})
   }, [])
 
-  // The recipe drives the "will consume" preview, so an operator sees what a run
-  // costs before committing to it rather than discovering it when stock moves.
-  // Read-only — recipes are seeded setup, not editable here.
+  // read-only — recipes are seeded setup, not editable here
   useEffect(() => {
     if (!form.output_item_id) {
       setRecipe([])
@@ -83,7 +73,7 @@ export default function Production() {
       })
       setCreating(false)
       setForm({ output_item_id: '', planned_quantity: '' })
-      setNotice(`Order ${res.data.order_number} created — execute it to consume inputs.`)
+      setNotice(`Order ${res.data.order_number} created. Execute it to consume inputs.`)
       load()
     } catch (err) {
       const fe = fieldErrors(err)
@@ -100,13 +90,12 @@ export default function Production() {
     try {
       const res = await api.post(`/production-orders/${order.id}/execute`)
       setNotice(
-        `${res.data.order_number} completed — produced batch ${res.data.output_batch?.batch_number} ` +
+        `${res.data.order_number} completed. Produced batch ${res.data.output_batch?.batch_number} ` +
           `from ${res.data.consumptions?.length ?? 0} input batch(es).`,
       )
       load()
     } catch (err) {
-      // The interesting failures land here: 422 insufficient inventory (with the
-      // shortfall in the body) and 409 already executed.
+      // the interesting failures land here: 422 insufficient inventory (with the shortfall in the body) and 409 already executed
       const b = err.body
       setError(
         b?.shortfall
@@ -238,12 +227,9 @@ export default function Production() {
           {recipe.length > 0 && (
             <div className="recipe">
               <div className="recipe-title">
-                {form.planned_quantity ? 'Will consume' : 'Recipe — per unit'}
+                {form.planned_quantity ? 'Will consume' : 'Recipe per unit'}
               </div>
               {recipe.map((line) => {
-                // toFixed before display: 0.4 * 20 is 8.000000000000002 in
-                // binary floating point, and this preview must not be the thing
-                // that makes the arithmetic look wrong.
                 const perUnit = Number(line.quantity_per_unit)
                 const planned = Number(form.planned_quantity)
                 const required = planned > 0 ? (perUnit * planned).toFixed(4) : null
@@ -270,7 +256,7 @@ export default function Production() {
                     )}
                     <span className="have">
                       have {qty(line.quantity_on_hand)}
-                      {short && ' — short'}
+                      {short && ' (short)'}
                     </span>
                   </div>
                 )
@@ -279,8 +265,8 @@ export default function Production() {
           )}
 
           <p className="muted" style={{ fontSize: 12, margin: 0 }}>
-            Inputs are derived from the bill of materials — creating the order does
-            not touch inventory. Stock moves only when you execute it.
+            Inputs are derived from the bill of materials. Creating the order does
+            not touch inventory; stock moves only when you execute it.
           </p>
         </Modal>
       )}

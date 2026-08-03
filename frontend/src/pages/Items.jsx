@@ -4,11 +4,7 @@ import { Alert, Confirm, Empty, Field, Loading, Modal, Panel, Pill, qty, when } 
 
 const EMPTY_FORM = { sku: '', name: '', unit_id: '', reorder_level: '0', description: '', is_active: true }
 
-/**
- * One component serves all three item stages — the fields and behaviour are
- * identical, only the endpoint and label differ. Which is the same reason the
- * backend backs three REST resources with one shared controller.
- */
+// one component serves all three item stages — the fields and behaviour are identical, only the endpoint and label differ
 export default function Items({ endpoint, title, noun }) {
   const [rows, setRows] = useState(null)
   const [units, setUnits] = useState([])
@@ -247,7 +243,7 @@ export default function Items({ endpoint, title, noun }) {
           }
           detail={
             confirming.can_delete
-              ? 'Nothing depends on this item — it has never been produced and no recipe refers to it.'
+              ? 'Nothing depends on this item. It has never been produced and no recipe refers to it.'
               : 'It holds stock, is named by a recipe, or appears in production history. To retire it instead, press Edit and uncheck “Active”.'
           }
           confirmLabel="Delete"
