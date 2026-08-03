@@ -15,6 +15,8 @@ export default function EventLog() {
 
   async function load() {
     try {
+      // The API is paginated; the demo dataset fits one page, so the UI asks
+      // for a large per_page rather than rendering pager controls.
       const res = await api.get('/production-events?per_page=50')
       setRows(res.data)
       setError('')

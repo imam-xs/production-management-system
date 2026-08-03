@@ -12,6 +12,8 @@ export default function Batches() {
   useEffect(() => {
     setRows(null)
     setError('')
+    // The API is paginated; the demo dataset fits one page, so the UI asks
+    // for a large per_page rather than rendering pager controls.
     const params = new URLSearchParams({ per_page: '100' })
     if (filters.item_type) params.set('item_type', filters.item_type)
     if (filters.origin) params.set('origin', filters.origin)

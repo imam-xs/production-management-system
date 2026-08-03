@@ -23,6 +23,8 @@ export default function Production() {
     // comment exists to prevent regressing. Each action handler clears the
     // banner itself before starting new work.
     try {
+      // The API is paginated; the demo dataset fits one page, so the UI asks
+      // for a large per_page rather than rendering pager controls.
       const params = new URLSearchParams({ per_page: '50' })
       if (filters.stage) params.set('stage', filters.stage)
       if (filters.status) params.set('status', filters.status)

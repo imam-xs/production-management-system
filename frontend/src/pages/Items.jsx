@@ -27,6 +27,8 @@ export default function Items({ endpoint, title, noun }) {
   const load = useCallback(async () => {
     setError('')
     try {
+      // The API is paginated; the demo dataset fits one page, so the UI asks
+      // for a large per_page rather than rendering pager controls.
       const query = search ? `?search=${encodeURIComponent(search)}&per_page=100` : '?per_page=100'
       const res = await api.get(`${endpoint}${query}`)
       setRows(res.data)
