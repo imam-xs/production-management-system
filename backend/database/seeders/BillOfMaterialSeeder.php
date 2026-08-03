@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\BillOfMaterial;
 use App\Models\Item;
 use Illuminate\Database\Seeder;
+
 class BillOfMaterialSeeder extends Seeder
 {
     public function run(): void

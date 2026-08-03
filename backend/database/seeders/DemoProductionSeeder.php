@@ -8,8 +8,8 @@ use App\Services\InventoryService;
 use App\Services\ProductionService;
 use Illuminate\Database\Seeder;
 
- // seeds a complete, traceable two-stage production chain by running real
- // production through InventoryService and ProductionService — not by hand-inserting batch/consumption rows
+// seeds a complete, traceable two-stage production chain by running real
+// production through InventoryService and ProductionService — not by hand-inserting batch/consumption rows
 
 class DemoProductionSeeder extends Seeder
 {
