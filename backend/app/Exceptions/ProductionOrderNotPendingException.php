@@ -4,15 +4,6 @@ namespace App\Exceptions;
 
 use App\Models\ProductionOrder;
 
-/**
- * Thrown when execute() or cancel() is attempted on an order that has already
- * left the Pending state.
- *
- * The check this guards happens against a row locked with `lockById()`, so a
- * second concurrent execute() call on the same order genuinely cannot race
- * past it — it observes the first call's completed status and stops here
- * instead of deducting stock twice.
- */
 class ProductionOrderNotPendingException extends DomainException
 {
     private function __construct(

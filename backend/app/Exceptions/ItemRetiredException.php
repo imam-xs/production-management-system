@@ -4,18 +4,6 @@ namespace App\Exceptions;
 
 use App\Models\Item;
 
-/**
- * Thrown when new work is requested against an item that has been retired.
- *
- * Retirement (`is_active = false`) is how a product leaves circulation once it
- * can no longer be deleted — see ItemService::delete(). It blocks *new* stock:
- * no production runs, no receipts. It deliberately does not block consuming
- * what already exists, which is how a component is phased out rather than
- * stranded on the shelf.
- *
- * Enforced in the services rather than only by filtering the UI's dropdowns, so
- * the rule holds for any client.
- */
 class ItemRetiredException extends DomainException
 {
     private function __construct(

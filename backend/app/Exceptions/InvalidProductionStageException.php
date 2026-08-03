@@ -4,11 +4,6 @@ namespace App\Exceptions;
 
 use App\Models\Item;
 
-/**
- * Thrown when a production request doesn't correspond to a legal stage: the
- * output item is a raw material (raw materials are received, never produced),
- * or it has no bill-of-materials recipe defined yet.
- */
 class InvalidProductionStageException extends DomainException
 {
     private function __construct(

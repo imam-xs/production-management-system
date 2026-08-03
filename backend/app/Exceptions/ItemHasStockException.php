@@ -4,15 +4,6 @@ namespace App\Exceptions;
 
 use App\Models\Item;
 
-/**
- * Thrown when an item cannot be deleted because something still depends on it.
- *
- * A product record is only removable while it is genuinely unused. Once a batch
- * has been made from it, or a recipe names it, deleting it would leave that
- * history pointing at nothing — and traceability is the one thing this system
- * exists to guarantee. Retiring a product that has been used is a different
- * operation: clear `is_active`, which keeps every record intact.
- */
 class ItemHasStockException extends DomainException
 {
     private function __construct(

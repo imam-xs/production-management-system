@@ -2,13 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Reasons stock changes, recorded on the append-only inventory ledger.
- *
- * Every row in `inventory_movements` carries a signed quantity; the sign is
- * derived from the type rather than trusted from the caller, so the ledger can
- * always be re-summed to verify `item_stocks`.
- */
+// reasons stock changes, recorded on the append-only inventory ledger
 enum MovementType: string
 {
     case Receipt = 'receipt';
@@ -16,10 +10,7 @@ enum MovementType: string
     case ProductionOutput = 'production_output';
     case Adjustment = 'adjustment';
 
-    /**
-     * Direction this movement applies to stock. Adjustments carry their own
-     * sign because they can go either way.
-     */
+    // direction this movement applies to stock
     public function sign(): int
     {
         return match ($this) {

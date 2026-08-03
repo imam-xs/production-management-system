@@ -14,18 +14,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * A production run — the anchor for both inventory movement and traceability.
+ * The casts below are what actually convert these columns; the annotations let
+ * static analysis see the enum and date types rather than the raw strings.
  *
- * @property int $id
- * @property string $order_number
  * @property ProductionStage $stage
- * @property int $output_item_id
- * @property string $planned_quantity
- * @property string $produced_quantity
  * @property ProductionOrderStatus $status
  * @property CarbonInterface|null $completed_at
- * @property string|null $failure_reason
- * @property int|null $created_by
  */
 class ProductionOrder extends Model
 {
@@ -63,8 +57,6 @@ class ProductionOrder extends Model
      */
     public function outputItem(): BelongsTo
     {
-        // withTrashed — see Batch::item(). A completed order must keep naming
-        // what it produced.
         return $this->belongsTo(Item::class, 'output_item_id')->withTrashed();
     }
 
@@ -77,9 +69,6 @@ class ProductionOrder extends Model
     }
 
     /**
-     * The batch this run produced. One order yields exactly one output batch,
-     * created in the same transaction that completes the order.
-     *
      * @return HasOne<Batch, $this>
      */
     public function outputBatch(): HasOne

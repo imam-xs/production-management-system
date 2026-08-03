@@ -2,13 +2,8 @@
 
 namespace App\Enums;
 
-/**
- * How a batch came into existence.
- *
- * This is what terminates the traceability recursion: a Purchase batch is a
- * leaf (it originated outside the plant), while a Production batch always has a
- * production order and therefore upstream consumption edges to follow.
- */
+// how a batch came into existence
+
 enum BatchOrigin: string
 {
     case Purchase = 'purchase';

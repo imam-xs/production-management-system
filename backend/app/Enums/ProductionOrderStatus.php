@@ -2,14 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Lifecycle of a production order.
- *
- * An order is created as Pending and only becomes Completed inside the same
- * transaction that moves the stock, so a Completed order always has consumption
- * rows and an output batch — there is no window where one exists without the
- * other.
- */
+// lifecycle of a production order
 enum ProductionOrderStatus: string
 {
     case Pending = 'pending';
@@ -17,10 +10,8 @@ enum ProductionOrderStatus: string
     case Failed = 'failed';
     case Cancelled = 'cancelled';
 
-    /**
-     * Only a pending order may be executed — this is what makes a repeated
-     * execute call a 409 rather than a double stock deduction.
-     */
+    // only a pending order may be executed — this is what makes a repeated
+    // execute call a 409 rather than a double stock deduction
     public function canBeExecuted(): bool
     {
         return $this === self::Pending;

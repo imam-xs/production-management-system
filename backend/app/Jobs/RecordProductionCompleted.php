@@ -85,6 +85,7 @@ class RecordProductionCompleted implements ShouldQueue
         $this->sendNotification();
     }
 
+    // stands in for a real notification channel (mail, Slack)
     private function sendNotification(): void
     {
         $output = $this->payload['output'] ?? [];

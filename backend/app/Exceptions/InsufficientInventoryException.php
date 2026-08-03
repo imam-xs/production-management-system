@@ -4,15 +4,6 @@ namespace App\Exceptions;
 
 use App\Models\Item;
 
-/**
- * Thrown by InventoryAllocator before any write happens, when an item's
- * available batches cannot cover the quantity a production run requires.
- *
- * This is the exception that makes "prevent production if inventory is
- * insufficient" real rather than aspirational — it fires inside the same
- * locked transaction that would otherwise deduct stock, so the order stays
- * Pending and nothing partial is left behind.
- */
 class InsufficientInventoryException extends DomainException
 {
     private function __construct(

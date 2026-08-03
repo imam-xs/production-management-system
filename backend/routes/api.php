@@ -11,13 +11,6 @@ use App\Http\Controllers\Api\V1\RecipeController;
 use App\Http\Controllers\Api\V1\SemiFinishedProductController;
 use Illuminate\Support\Facades\Route;
 
-/*
-| Explicit routes, not Route::apiResource(): a plain (non-model) route
-| parameter binds to a controller argument by NAME, and apiResource would
-| generate `raw_material` where the controller expects `$rawMaterial`. Writing
-| them out also leaves room for the non-CRUD actions (execute, trace, receipts).
-*/
-
 Route::prefix('v1')->name('v1.')->group(function (): void {
 
     Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');
@@ -29,8 +22,6 @@ Route::prefix('v1')->name('v1.')->group(function (): void {
             Route::get('me', [AuthController::class, 'me'])->name('me');
         });
 
-        // The three item resources are the same six routes with a different
-        // controller — the placeholder is spelled like the controller argument.
         Route::prefix('raw-materials')->name('raw-materials.')->group(function (): void {
             Route::get('/', [RawMaterialController::class, 'index'])->name('index');
             Route::post('/', [RawMaterialController::class, 'store'])->name('store');
@@ -62,7 +53,7 @@ Route::prefix('v1')->name('v1.')->group(function (): void {
             Route::post('receipts', [InventoryController::class, 'receive'])->name('receipts');
         });
 
-        // Both hang off a single item; the recipe is read-only — see RecipeController.
+        // Both hang off a single item, the recipe is read-only — see RecipeController.
         Route::prefix('items/{item}')->name('items.')->group(function (): void {
             Route::get('movements', [InventoryController::class, 'movements'])->name('movements');
             Route::get('recipe', [RecipeController::class, 'show'])->name('recipe');

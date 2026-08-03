@@ -2,14 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * The two transformations the plant performs.
- *
- * Each stage declares which item type it consumes and which it produces, so
- * legality is data rather than a chain of conditionals. Supporting a third
- * stage (finished -> packaged) means adding a case here plus a strategy, with
- * no edits to the services that consume it.
- */
+// the two transformations the plant performs
 enum ProductionStage: string
 {
     case RawToSemiFinished = 'raw_to_semi_finished';
@@ -31,10 +24,6 @@ enum ProductionStage: string
         };
     }
 
-    /**
-     * The stage implied by producing the given item type, or null when that
-     * type is never produced (raw materials are received, not manufactured).
-     */
     public static function forOutputType(ItemType $type): ?self
     {
         return match ($type) {
@@ -44,12 +33,8 @@ enum ProductionStage: string
         };
     }
 
-    /**
-     * AMQP routing key published when a run of this stage completes.
-     *
-     * Both match the consumer's binding key `production.*.completed`, so a new
-     * stage is picked up by the existing queue without a topology change.
-     */
+    // event name recorded on the production event log — identifies which
+    // transition the message describes
     public function routingKey(): string
     {
         return match ($this) {

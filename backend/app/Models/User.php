@@ -47,8 +47,6 @@ class User extends Authenticatable
     }
 
     /**
-     * Production orders this user initiated — the audit trail for who ran what.
-     *
      * @return HasMany<ProductionOrder, $this>
      */
     public function productionOrders(): HasMany
