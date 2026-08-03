@@ -47,7 +47,18 @@ body {
   color: #fff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.brand span { display: block; font-size: 11px; font-weight: 400; color: #7c8db5; margin-top: 3px; }
+.brand-sub { display: block; font-size: 11px; font-weight: 400; color: #7c8db5; margin-top: 3px; }
+
+/* Hamburger. Hidden until the sidebar collapses into a top bar. */
+.menu-toggle { display: none; }
+.menu-toggle span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: #cbd5e1;
+  border-radius: 2px;
+  transition: transform 0.18s, opacity 0.18s;
+}
 
 .nav-group { padding: 14px 0 4px; }
 .nav-group-label {
@@ -366,7 +377,62 @@ button.danger-solid {
 }
 button.danger-solid:hover:not(:disabled) { background: #b91c1c; border-color: #b91c1c; }
 
+/* Narrow screens: the sidebar stacks on top, so lay it out horizontally instead
+   of keeping the tall column that pushed the page content off-screen. The links
+   scroll sideways rather than wrapping, which keeps the bar one row high no
+   matter how many there are. */
 @media (max-width: 800px) {
   .shell { flex-direction: column; }
-  .sidebar { width: 100%; }
+
+  .sidebar { width: 100%; padding: 10px 14px; }
+
+  /* Collapsed state: only this bar shows, with the hamburger on the left. */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    border-bottom: 0;
+  }
+  .brand-sub { display: none; }
+
+  .menu-toggle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 34px;
+    height: 30px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 6px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Three bars fold into a cross while the drawer is open. */
+  .menu-open .menu-toggle span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .menu-open .menu-toggle span:nth-child(2) { opacity: 0; }
+  .menu-open .menu-toggle span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+  /* The drawer itself. */
+  .nav-group,
+  .sidebar-foot { display: none; }
+
+  .menu-open .nav-group { display: block; padding: 8px 0 0; }
+  .menu-open .nav-group-label { padding: 6px 6px 4px; }
+  .menu-open .nav-link { padding: 9px 6px; }
+
+  .menu-open .sidebar-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px 6px 0;
+  }
+  .menu-open button.sign-out { width: auto; }
+
+  .content { padding: 16px; }
 }

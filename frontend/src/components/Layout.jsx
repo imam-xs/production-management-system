@@ -53,6 +53,11 @@ function initialsOf(name) {
 export default function Layout({ user, onLogout, children }) {
   const location = useLocation()
   const [lowStockCount, setLowStockCount] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  // Close the drawer after navigating, otherwise it stays over the page the
+  // user just asked for. Wide screens ignore the flag entirely.
+  useEffect(() => setMenuOpen(false), [location.pathname])
 
   // Raw materials only: the badge sits beside that link, so counting every
   // stage would show a number the page it labels cannot account for.
@@ -70,11 +75,21 @@ export default function Layout({ user, onLogout, children }) {
   const title = TITLES[location.pathname] || (location.pathname.startsWith('/trace') ? 'Traceability' : 'Production Management')
 
   return (
-    <div className="shell">
+    <div className={`shell ${menuOpen ? 'menu-open' : ''}`}>
       <aside className="sidebar">
         <div className="brand">
+          <button
+            className="menu-toggle"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
           Production Management
-          <span>Steel fabrication plant</span>
+          <span className="brand-sub">Steel fabrication plant</span>
         </div>
 
         {NAV.map((section, i) => (
