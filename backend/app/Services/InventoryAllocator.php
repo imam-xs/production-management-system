@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Exceptions\InsufficientInventoryException;
 use App\Models\Batch;
 use App\Models\Item;
 use App\Repositories\Contracts\BatchRepositoryInterface;
+use Illuminate\Validation\ValidationException;
 
 // plans which batches cover a required quantity, oldest first
 // must run inside a transaction — lockAvailableFifo takes row locks
@@ -30,7 +30,16 @@ class InventoryAllocator
         }
 
         if (bccomp($totalAvailable, $requiredQuantity, 4) < 0) {
-            throw InsufficientInventoryException::forItem($item, $requiredQuantity, $totalAvailable);
+            throw ValidationException::withMessages([
+                'planned_quantity' => sprintf(
+                    'Insufficient inventory for %s (%s): %s required, %s available, short by %s.',
+                    $item->name,
+                    $item->sku,
+                    $requiredQuantity,
+                    $totalAvailable,
+                    bcsub($requiredQuantity, $totalAvailable, 4),
+                ),
+            ]);
         }
 
         $plan = [];

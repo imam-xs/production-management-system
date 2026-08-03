@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ItemType;
-use App\Exceptions\ItemHasStockException;
 use App\Models\Item;
 use App\Repositories\Contracts\BatchRepositoryInterface;
 use App\Repositories\Contracts\BillOfMaterialRepositoryInterface;
@@ -101,15 +100,15 @@ class ItemService
     public function delete(Item $item): void
     {
         if ($this->batches->hasRemainingStock($item)) {
-            throw ItemHasStockException::forItem($item);
+            abort(409, sprintf('Cannot delete %s (%s) while it still has inventory on hand.', $item->name, $item->sku));
         }
 
         if ($this->batches->hasAnyBatch($item)) {
-            throw ItemHasStockException::usedInProduction($item);
+            abort(409, sprintf('Cannot delete %s (%s): it appears in production history. Mark it inactive instead.', $item->name, $item->sku));
         }
 
         if ($this->boms->isReferenced($item)) {
-            throw ItemHasStockException::usedInRecipe($item);
+            abort(409, sprintf('Cannot delete %s (%s): a bill of materials still refers to it.', $item->name, $item->sku));
         }
 
         $this->items->delete($item);

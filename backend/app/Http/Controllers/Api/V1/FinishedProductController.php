@@ -32,7 +32,7 @@ class FinishedProductController extends ItemController
         return $this->doStore($request->validated());
     }
 
-    public function update(UpdateItemRequest $request, int $finishedProduct): JsonResponse
+    public function update(UpdateItemRequest $request, int $finishedProduct): ItemResource
     {
         return $this->doUpdate($finishedProduct, $request->validated());
     }

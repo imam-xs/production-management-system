@@ -46,18 +46,18 @@ abstract class ItemController extends Controller
     {
         $item = $this->items->create($this->itemType(), $validated);
 
-        return (new ItemResource($item))->response()->setStatusCode(201);
+        return $this->created(new ItemResource($item));
     }
 
     /**
      * @param  array<string, mixed>  $validated
      */
-    protected function doUpdate(int $id, array $validated): JsonResponse
+    protected function doUpdate(int $id, array $validated): ItemResource
     {
         $item = $this->items->findOrFail($id, $this->itemType());
         $updated = $this->items->update($item, $validated);
 
-        return (new ItemResource($updated))->response();
+        return new ItemResource($updated);
     }
 
     protected function doDestroy(int $id): JsonResponse
@@ -65,6 +65,6 @@ abstract class ItemController extends Controller
         $item = $this->items->findOrFail($id, $this->itemType());
         $this->items->delete($item);
 
-        return response()->json(status: 204);
+        return $this->noContent();
     }
 }

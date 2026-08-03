@@ -54,7 +54,7 @@ class ProductionOrderController extends Controller
             $request->user(),
         );
 
-        return (new ProductionOrderResource($order))->response()->setStatusCode(201);
+        return $this->created(new ProductionOrderResource($order));
     }
 
     // execute a pending order: consume its recipe's inputs, produce one output batch

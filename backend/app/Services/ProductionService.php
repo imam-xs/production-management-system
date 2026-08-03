@@ -7,9 +7,6 @@ use App\Enums\MovementType;
 use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
 use App\Events\ProductionCompleted;
-use App\Exceptions\InvalidProductionStageException;
-use App\Exceptions\ItemRetiredException;
-use App\Exceptions\ProductionOrderNotPendingException;
 use App\Models\Batch;
 use App\Models\Item;
 use App\Models\ProductionEventLog;
@@ -23,11 +20,14 @@ use App\Repositories\Contracts\ProductionOrderRepositoryInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
+use Illuminate\Validation\ValidationException;
 
 class ProductionService
 {
+    private const MAX_ORDER_NUMBER_ATTEMPTS = 5;
+
     public function __construct(
         private readonly ItemRepositoryInterface $items,
         private readonly BatchRepositoryInterface $batches,
@@ -77,31 +77,57 @@ class ProductionService
         $stage = ProductionStage::forOutputType($outputItem->type);
 
         if ($stage === null) {
-            throw InvalidProductionStageException::itemIsNotProduced($outputItem);
+            throw ValidationException::withMessages([
+                'output_item_id' => sprintf('%s (%s) is a raw material and cannot be the output of a production run.', $outputItem->name, $outputItem->sku),
+            ]);
         }
 
         // output only — retired items stay consumable as inputs
 
         if (! $outputItem->is_active) {
-            throw ItemRetiredException::cannotProduce($outputItem);
+            throw ValidationException::withMessages([
+                'output_item_id' => sprintf('%s (%s) is retired and cannot be produced. Mark it active first.', $outputItem->name, $outputItem->sku),
+            ]);
         }
 
         if (bccomp($plannedQuantity, '0', 4) <= 0) {
-            throw new InvalidArgumentException('Planned quantity must be greater than zero.');
+            throw ValidationException::withMessages([
+                'planned_quantity' => 'Planned quantity must be greater than zero.',
+            ]);
         }
 
         if (! $this->boms->hasRecipe($outputItem)) {
-            throw InvalidProductionStageException::missingRecipe($outputItem);
+            throw ValidationException::withMessages([
+                'output_item_id' => sprintf('%s (%s) has no bill-of-materials recipe, so production cannot be planned.', $outputItem->name, $outputItem->sku),
+            ]);
         }
 
-        return $this->orders->create([
-            'order_number' => $this->nextOrderNumber(now()),
-            'stage' => $stage,
-            'output_item_id' => $outputItem->id,
-            'planned_quantity' => $plannedQuantity,
-            'status' => ProductionOrderStatus::Pending,
-            'created_by' => $createdBy?->id,
-        ]);
+        // Same retry as BatchService: the sequence is read then written, so two
+        // requests in the same second can compute the same number. The unique
+        // index rejects the loser, and it takes the next one.
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return $this->orders->create([
+                    'order_number' => $this->nextOrderNumber(now()),
+                    'stage' => $stage,
+                    'output_item_id' => $outputItem->id,
+                    'planned_quantity' => $plannedQuantity,
+                    'status' => ProductionOrderStatus::Pending,
+                    'created_by' => $createdBy?->id,
+                ]);
+            } catch (QueryException $e) {
+                if ($attempt >= self::MAX_ORDER_NUMBER_ATTEMPTS || ! $this->isDuplicateOrderNumber($e)) {
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    private function isDuplicateOrderNumber(QueryException $e): bool
+    {
+        $isDuplicateEntry = ($e->errorInfo[1] ?? null) === 1062;
+
+        return $isDuplicateEntry && str_contains($e->getMessage(), 'production_orders_order_number_unique');
     }
 
     // PO-Ymd-sequence, e.g. PO-20260730-0001 — a candidate, not a guarantee:
@@ -145,7 +171,7 @@ class ProductionService
         }
 
         if (! $locked->status->canBeExecuted()) {
-            throw ProductionOrderNotPendingException::forOrder($locked);
+            abort(409, sprintf('Production order %s cannot be modified because it is already %s.', $locked->order_number, $locked->status->value));
         }
 
         return $locked;

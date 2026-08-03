@@ -32,7 +32,7 @@ class RawMaterialController extends ItemController
         return $this->doStore($request->validated());
     }
 
-    public function update(UpdateItemRequest $request, int $rawMaterial): JsonResponse
+    public function update(UpdateItemRequest $request, int $rawMaterial): ItemResource
     {
         return $this->doUpdate($rawMaterial, $request->validated());
     }

@@ -4,19 +4,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
-use App\Http\Responses\ApiResponse;
 use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-/**
- * Plain Sanctum personal-access-token auth — no stateful/cookie flow. A
- * separate SPA on its own origin talking to a token API is the textbook case
- * for this half of Sanctum; the cookie-based "first-party SPA" flow exists for
- * when frontend and backend share a domain, which is not this setup.
- */
+// plain Sanctum personal-access-token auth — no stateful/cookie flow
 class AuthController extends Controller
 {
     public function login(LoginRequest $request): JsonResponse
@@ -32,7 +26,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('api')->plainTextToken;
 
-        return ApiResponse::data([
+        return $this->data([
             'token' => $token,
             'token_type' => 'Bearer',
             'user' => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email],
@@ -43,13 +37,13 @@ class AuthController extends Controller
     {
         $request->user()?->currentAccessToken()->delete();
 
-        return ApiResponse::message('Logged out.');
+        return $this->message('Logged out.');
     }
 
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        return ApiResponse::data(['id' => $user->id, 'name' => $user->name, 'email' => $user->email]);
+        return $this->data(['id' => $user->id, 'name' => $user->name, 'email' => $user->email]);
     }
 }

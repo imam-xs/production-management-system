@@ -60,7 +60,7 @@ class InventoryController extends Controller
             $data['note'] ?? null,
         );
 
-        return (new BatchResource($batch->load(['item.unit', 'productionOrder'])))->response()->setStatusCode(201);
+        return $this->created(new BatchResource($batch->load(['item.unit', 'productionOrder'])));
     }
 
     // the full inventory ledger for one item — any of the three stages

@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\BatchOrigin;
 use App\Enums\ItemType;
 use App\Enums\MovementType;
-use App\Exceptions\ItemRetiredException;
 use App\Models\Batch;
 use App\Models\InventoryMovement;
 use App\Models\Item;
@@ -15,16 +14,10 @@ use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
+use Illuminate\Validation\ValidationException;
 
-/**
- * Raw material receiving and inventory reads.
- *
- * Production's own inventory movements (input consumption, output creation)
- * live in ProductionService, next to the transaction they are part of — see
- * that class for why the deduction is synchronous rather than handled by the
- * RabbitMQ consumer.
- */
+// raw material receiving and inventory reads; production's own stock movements
+// live in ProductionService, inside the transaction they belong to
 class InventoryService
 {
     public function __construct(
@@ -32,12 +25,8 @@ class InventoryService
         private readonly BatchService $batchService,
     ) {}
 
-    /**
-     * Receive a quantity of a raw material into a new purchase batch.
-     *
-     * The only way raw material stock increases — semi-finished and finished
-     * stock only ever increase through ProductionService::execute().
-     */
+    // the only way raw material stock increases; every other stage grows only
+    // through ProductionService::execute()
     public function receive(
         Item $item,
         string $quantity,
@@ -45,19 +34,23 @@ class InventoryService
         ?string $note = null,
     ): Batch {
         if ($item->type !== ItemType::Raw) {
-            throw new InvalidArgumentException(
-                "{$item->name} ({$item->sku}) is not a raw material; only raw materials are received directly.",
-            );
+            throw ValidationException::withMessages([
+                'item_id' => "{$item->name} ({$item->sku}) is not a raw material; only raw materials are received directly.",
+            ]);
         }
 
-        // Same rule as production: a retired material takes no new stock. See
-        // ProductionService::createOrder().
+        // same rule as production: a retired material takes no new stock
+        // see ProductionService::createOrder().
         if (! $item->is_active) {
-            throw ItemRetiredException::cannotReceive($item);
+            throw ValidationException::withMessages([
+                'item_id' => sprintf('%s (%s) is retired and cannot be received. Mark it active first.', $item->name, $item->sku),
+            ]);
         }
 
         if (bccomp($quantity, '0', 4) <= 0) {
-            throw new InvalidArgumentException('Received quantity must be greater than zero.');
+            throw ValidationException::withMessages([
+                'quantity' => 'Received quantity must be greater than zero.',
+            ]);
         }
 
         return DB::transaction(function () use ($item, $quantity, $producedAt, $note): Batch {
@@ -74,10 +67,6 @@ class InventoryService
     }
 
     /**
-     * Current stock across every item, optionally narrowed to one stage —
-     * "view current inventory at every production stage". Includes items at
-     * zero, which are the ones that matter most.
-     *
      * @return Collection<int, Item>
      */
     public function stockLevels(?ItemType $type = null): Collection

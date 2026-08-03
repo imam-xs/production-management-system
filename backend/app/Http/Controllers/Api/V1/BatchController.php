@@ -7,7 +7,6 @@ use App\Enums\ItemType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BatchFilterRequest;
 use App\Http\Resources\BatchResource;
-use App\Http\Responses\ApiResponse;
 use App\Services\BatchService;
 use App\Services\TraceabilityService;
 use Illuminate\Http\JsonResponse;
@@ -47,13 +46,13 @@ class BatchController extends Controller
     {
         $model = $this->batches->findOrFail($batch);
 
-        return ApiResponse::data($this->traceability->traceUpstream($model));
+        return $this->data($this->traceability->traceUpstream($model));
     }
 
     public function traceDownstream(int $batch): JsonResponse
     {
         $model = $this->batches->findOrFail($batch);
 
-        return ApiResponse::data($this->traceability->traceDownstream($model));
+        return $this->data($this->traceability->traceDownstream($model));
     }
 }
