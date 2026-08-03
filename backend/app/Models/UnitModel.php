@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
-use Database\Factories\UnitFactory;
+use Database\Factories\UnitModelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Unit extends Model
+class UnitModel extends Model
 {
-    /** @use HasFactory<UnitFactory> */
+    /** @use HasFactory<UnitModelFactory> */
     use HasFactory;
+
+    // the class name no longer matches the table, so name it explicitly
+    protected $table = 'units';
 
     protected $fillable = [
         'code',
@@ -18,10 +21,10 @@ class Unit extends Model
     ];
 
     /**
-     * @return HasMany<Item, $this>
+     * @return HasMany<ItemModel, $this>
      */
     public function items(): HasMany
     {
-        return $this->hasMany(Item::class);
+        return $this->hasMany(ItemModel::class, 'unit_id');
     }
 }

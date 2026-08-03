@@ -2,30 +2,30 @@
 
 namespace App\Repositories\Eloquent;
 
-use App\Models\BillOfMaterial;
-use App\Models\Item;
+use App\Models\BillOfMaterialModel;
+use App\Models\ItemModel;
 use App\Repositories\Contracts\BillOfMaterialRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 
 class BillOfMaterialRepository implements BillOfMaterialRepositoryInterface
 {
-    public function recipeFor(Item $outputItem): Collection
+    public function recipeFor(ItemModel $outputItem): Collection
     {
-        return BillOfMaterial::query()
+        return BillOfMaterialModel::query()
             ->with(['inputItem.unit', 'inputItem.stock'])
             ->where('output_item_id', $outputItem->id)
             ->orderBy('input_item_id')
             ->get();
     }
 
-    public function hasRecipe(Item $outputItem): bool
+    public function hasRecipe(ItemModel $outputItem): bool
     {
-        return BillOfMaterial::query()->where('output_item_id', $outputItem->id)->exists();
+        return BillOfMaterialModel::query()->where('output_item_id', $outputItem->id)->exists();
     }
 
-    public function isReferenced(Item $item): bool
+    public function isReferenced(ItemModel $item): bool
     {
-        return BillOfMaterial::query()
+        return BillOfMaterialModel::query()
             ->where('output_item_id', $item->id)
             ->orWhere('input_item_id', $item->id)
             ->exists();

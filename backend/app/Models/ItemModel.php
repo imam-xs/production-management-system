@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ItemType;
-use Database\Factories\ItemFactory;
+use Database\Factories\ItemModelFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,17 +23,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $description
  * @property string $reorder_level
  * @property bool $is_active
- * @property-read ItemStock|null $stock The stock row is created lazily on an
+ * @property-read ItemStockModel|null $stock The stock row is created lazily on an
  *   item's first inventory movement, so it is genuinely absent for a newly
  *   created item. The HasOne generic can't express that nullability, hence
  *   this explicit annotation.
  */
-class Item extends Model
+class ItemModel extends Model
 {
-    /** @use HasFactory<ItemFactory> */
+    /** @use HasFactory<ItemModelFactory> */
     use HasFactory;
 
     use SoftDeletes;
+
+    // the class name no longer matches the table, so name it explicitly
+    protected $table = 'items';
 
     protected $fillable = [
         'sku',
@@ -58,63 +61,63 @@ class Item extends Model
     }
 
     /**
-     * @return BelongsTo<Unit, $this>
+     * @return BelongsTo<UnitModel, $this>
      */
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(Unit::class);
+        return $this->belongsTo(UnitModel::class);
     }
 
     /**
-     * @return HasOne<ItemStock, $this>
+     * @return HasOne<ItemStockModel, $this>
      */
     public function stock(): HasOne
     {
-        return $this->hasOne(ItemStock::class);
+        return $this->hasOne(ItemStockModel::class, 'item_id');
     }
 
     /**
-     * @return HasMany<Batch, $this>
+     * @return HasMany<BatchModel, $this>
      */
     public function batches(): HasMany
     {
-        return $this->hasMany(Batch::class);
+        return $this->hasMany(BatchModel::class, 'item_id');
     }
 
     /**
-     * @return HasMany<InventoryMovement, $this>
+     * @return HasMany<InventoryMovementModel, $this>
      */
     public function movements(): HasMany
     {
-        return $this->hasMany(InventoryMovement::class);
+        return $this->hasMany(InventoryMovementModel::class, 'item_id');
     }
 
     /**
      * Recipe lines describing what this item is made of.
      *
-     * @return HasMany<BillOfMaterial, $this>
+     * @return HasMany<BillOfMaterialModel, $this>
      */
     public function billOfMaterials(): HasMany
     {
-        return $this->hasMany(BillOfMaterial::class, 'output_item_id');
+        return $this->hasMany(BillOfMaterialModel::class, 'output_item_id');
     }
 
     /**
      * Recipe lines where this item is an ingredient.
      *
-     * @return HasMany<BillOfMaterial, $this>
+     * @return HasMany<BillOfMaterialModel, $this>
      */
     public function usedIn(): HasMany
     {
-        return $this->hasMany(BillOfMaterial::class, 'input_item_id');
+        return $this->hasMany(BillOfMaterialModel::class, 'input_item_id');
     }
 
     /**
-     * @return HasMany<ProductionOrder, $this>
+     * @return HasMany<ProductionOrderModel, $this>
      */
     public function productionOrders(): HasMany
     {
-        return $this->hasMany(ProductionOrder::class, 'output_item_id');
+        return $this->hasMany(ProductionOrderModel::class, 'output_item_id');
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\ProductionOrder;
+use App\Models\ProductionOrderModel;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 
@@ -12,6 +12,6 @@ class ProductionCompleted implements ShouldDispatchAfterCommit
     use Dispatchable;
 
     public function __construct(
-        public readonly ProductionOrder $order,
+        public readonly ProductionOrderModel $order,
     ) {}
 }

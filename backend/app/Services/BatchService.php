@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Enums\BatchOrigin;
 use App\Enums\ItemType;
-use App\Models\Batch;
-use App\Models\Item;
-use App\Models\ProductionOrder;
+use App\Models\BatchModel;
+use App\Models\ItemModel;
+use App\Models\ProductionOrderModel;
 use App\Repositories\Contracts\BatchRepositoryInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -22,7 +22,7 @@ class BatchService
     ) {}
 
     /**
-     * @return LengthAwarePaginator<int, Batch>
+     * @return LengthAwarePaginator<int, BatchModel>
      */
     public function list(
         ?string $search = null,
@@ -38,18 +38,18 @@ class BatchService
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function findOrFail(int $id): Batch
+    public function findOrFail(int $id): BatchModel
     {
         return $this->batches->findByIdOrFail($id);
     }
 
     public function make(
-        Item $item,
+        ItemModel $item,
         string $quantity,
         BatchOrigin $origin,
-        ?ProductionOrder $producedBy,
+        ?ProductionOrderModel $producedBy,
         DateTimeInterface $producedAt,
-    ): Batch {
+    ): BatchModel {
         for ($attempt = 1; ; $attempt++) {
             try {
                 return $this->batches->create([
@@ -72,7 +72,7 @@ class BatchService
 
     // prefix-Ymd-sequence, e.g. RM-20260730-0001 — a candidate, not a guarantee:
     // the unique index on batch_number is what actually enforces uniqueness
-    private function nextNumber(Item $item, DateTimeInterface $producedAt): string
+    private function nextNumber(ItemModel $item, DateTimeInterface $producedAt): string
     {
         $sequence = $this->batches->countProducedOn($producedAt, $item->type) + 1;
 

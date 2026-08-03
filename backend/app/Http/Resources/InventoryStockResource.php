@@ -2,19 +2,19 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Item;
-use App\Models\ItemStock;
+use App\Models\ItemModel;
+use App\Models\ItemStockModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * One row of the inventory view: an item plus its current quantity.
  *
- * Wraps an Item rather than an ItemStock because the listing is item-driven —
+ * Wraps an ItemModel rather than an ItemStockModel because the listing is item-driven:
  * an item whose stock row does not exist yet must still be listed, reading as
  * zero. See InventoryRepository::stockLevels() for why.
  *
- * @property Item $resource
+ * @property ItemModel $resource
  */
 class InventoryStockResource extends JsonResource
 {
@@ -25,10 +25,10 @@ class InventoryStockResource extends JsonResource
     {
         // Larastan types the HasOne access as non-nullable; at runtime the
         // relation is genuinely null until the item's first movement.
-        /** @var ItemStock|null $stock */
+        /** @var ItemStockModel|null $stock */
         $stock = $this->resource->stock;
 
-        $quantityOnHand = $stock instanceof ItemStock ? (string) $stock->quantity_on_hand : '0.0000';
+        $quantityOnHand = $stock instanceof ItemStockModel ? (string) $stock->quantity_on_hand : '0.0000';
         $reorderLevel = (string) $this->resource->reorder_level;
 
         return [

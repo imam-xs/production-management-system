@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Models\ProductionConsumption;
+use App\Models\ProductionConsumptionModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property ProductionConsumption $resource
+ * @property ProductionConsumptionModel $resource
  */
 class ProductionConsumptionResource extends JsonResource
 {

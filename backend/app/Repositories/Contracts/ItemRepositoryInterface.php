@@ -3,14 +3,14 @@
 namespace App\Repositories\Contracts;
 
 use App\Enums\ItemType;
-use App\Models\Item;
+use App\Models\ItemModel;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface ItemRepositoryInterface
 {
     /**
-     * @return LengthAwarePaginator<int, Item>
+     * @return LengthAwarePaginator<int, ItemModel>
      */
     public function paginateByType(
         ItemType $type,
@@ -22,31 +22,31 @@ interface ItemRepositoryInterface
     ): LengthAwarePaginator;
 
     /**
-     * @return Collection<int, Item>
+     * @return Collection<int, ItemModel>
      */
     public function allOfType(ItemType $type): Collection;
 
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function findByIdOrFail(int $id): Item;
+    public function findByIdOrFail(int $id): ItemModel;
 
-    public function findByIdAndType(int $id, ItemType $type): ?Item;
-
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    public function create(array $attributes): Item;
+    public function findByIdAndType(int $id, ItemType $type): ?ItemModel;
 
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public function update(Item $item, array $attributes): Item;
-
-    public function delete(Item $item): void;
+    public function create(array $attributes): ItemModel;
 
     /**
-     * @return Collection<int, Item>
+     * @param  array<string, mixed>  $attributes
+     */
+    public function update(ItemModel $item, array $attributes): ItemModel;
+
+    public function delete(ItemModel $item): void;
+
+    /**
+     * @return Collection<int, ItemModel>
      */
     public function lowStock(?ItemType $type = null): Collection;
 }

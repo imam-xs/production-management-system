@@ -2,15 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\BillOfMaterial;
-use App\Models\Item;
+use App\Models\BillOfMaterialModel;
+use App\Models\ItemModel;
 use Illuminate\Database\Seeder;
 
 class BillOfMaterialSeeder extends Seeder
 {
     public function run(): void
     {
-        $items = Item::query()->pluck('id', 'sku');
+        $items = ItemModel::query()->pluck('id', 'sku');
 
         $recipes = [
             // raw -> semi-finished
@@ -25,7 +25,7 @@ class BillOfMaterialSeeder extends Seeder
         ];
 
         foreach ($recipes as $recipe) {
-            BillOfMaterial::query()->updateOrCreate(
+            BillOfMaterialModel::query()->updateOrCreate(
                 [
                     'output_item_id' => $items[$recipe['output']],
                     'input_item_id' => $items[$recipe['input']],

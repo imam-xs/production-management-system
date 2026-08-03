@@ -5,10 +5,10 @@ namespace App\Services;
 use App\Enums\BatchOrigin;
 use App\Enums\ItemType;
 use App\Enums\MovementType;
-use App\Models\Batch;
-use App\Models\InventoryMovement;
-use App\Models\Item;
-use App\Models\ItemStock;
+use App\Models\BatchModel;
+use App\Models\InventoryMovementModel;
+use App\Models\ItemModel;
+use App\Models\ItemStockModel;
 use App\Repositories\Contracts\InventoryRepositoryInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -28,11 +28,11 @@ class InventoryService
     // the only way raw material stock increases; every other stage grows only
     // through ProductionService::execute()
     public function receive(
-        Item $item,
+        ItemModel $item,
         string $quantity,
         ?DateTimeInterface $producedAt = null,
         ?string $note = null,
-    ): Batch {
+    ): BatchModel {
         if ($item->type !== ItemType::Raw) {
             throw ValidationException::withMessages([
                 'item_id' => "{$item->name} ({$item->sku}) is not a raw material; only raw materials are received directly.",
@@ -53,7 +53,7 @@ class InventoryService
             ]);
         }
 
-        return DB::transaction(function () use ($item, $quantity, $producedAt, $note): Batch {
+        return DB::transaction(function () use ($item, $quantity, $producedAt, $note): BatchModel {
             $producedAt ??= now();
 
             $batch = $this->batchService->make($item, $quantity, BatchOrigin::Purchase, null, $producedAt);
@@ -67,22 +67,22 @@ class InventoryService
     }
 
     /**
-     * @return Collection<int, Item>
+     * @return Collection<int, ItemModel>
      */
     public function stockLevels(?ItemType $type = null): Collection
     {
         return $this->inventory->stockLevels($type);
     }
 
-    public function stockFor(Item $item): ItemStock
+    public function stockFor(ItemModel $item): ItemStockModel
     {
         return $this->inventory->stockFor($item);
     }
 
     /**
-     * @return LengthAwarePaginator<int, InventoryMovement>
+     * @return LengthAwarePaginator<int, InventoryMovementModel>
      */
-    public function movementsFor(Item $item, int $perPage = 15): LengthAwarePaginator
+    public function movementsFor(ItemModel $item, int $perPage = 15): LengthAwarePaginator
     {
         return $this->inventory->paginateMovements($item, $perPage);
     }

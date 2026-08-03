@@ -2,19 +2,19 @@
 
 namespace App\Repositories\Contracts;
 
-use App\Models\BillOfMaterial;
-use App\Models\Item;
+use App\Models\BillOfMaterialModel;
+use App\Models\ItemModel;
 use Illuminate\Database\Eloquent\Collection;
 
 // recipe lookups
 interface BillOfMaterialRepositoryInterface
 {
     /**
-     * @return Collection<int, BillOfMaterial>
+     * @return Collection<int, BillOfMaterialModel>
      */
-    public function recipeFor(Item $outputItem): Collection;
+    public function recipeFor(ItemModel $outputItem): Collection;
 
-    public function hasRecipe(Item $outputItem): bool;
+    public function hasRecipe(ItemModel $outputItem): bool;
 
-    public function isReferenced(Item $item): bool;
+    public function isReferenced(ItemModel $item): bool;
 }

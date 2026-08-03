@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Item;
-use App\Models\ProductionOrder;
+use App\Models\ItemModel;
+use App\Models\ProductionOrderModel;
 use App\Services\InventoryService;
 use App\Services\ProductionService;
 use Illuminate\Database\Seeder;
@@ -20,18 +20,18 @@ class DemoProductionSeeder extends Seeder
 
     public function run(): void
     {
-        if (ProductionOrder::query()->exists()) {
+        if (ProductionOrderModel::query()->exists()) {
             $this->command->info('  Demo chain already present — skipped.');
 
             return;
         }
 
-        $sheet = Item::query()->where('sku', 'RAW-STEEL-SHEET')->firstOrFail();
-        $zinc = Item::query()->where('sku', 'RAW-ZINC-INGOT')->firstOrFail();
-        $rod = Item::query()->where('sku', 'SEMI-STEEL-ROD')->firstOrFail();
-        $galvSheet = Item::query()->where('sku', 'SEMI-GALV-SHEET')->firstOrFail();
-        $pipe = Item::query()->where('sku', 'FIN-STEEL-PIPE')->firstOrFail();
-        $frame = Item::query()->where('sku', 'FIN-STEEL-FRAME')->firstOrFail();
+        $sheet = ItemModel::query()->where('sku', 'RAW-STEEL-SHEET')->firstOrFail();
+        $zinc = ItemModel::query()->where('sku', 'RAW-ZINC-INGOT')->firstOrFail();
+        $rod = ItemModel::query()->where('sku', 'SEMI-STEEL-ROD')->firstOrFail();
+        $galvSheet = ItemModel::query()->where('sku', 'SEMI-GALV-SHEET')->firstOrFail();
+        $pipe = ItemModel::query()->where('sku', 'FIN-STEEL-PIPE')->firstOrFail();
+        $frame = ItemModel::query()->where('sku', 'FIN-STEEL-FRAME')->firstOrFail();
 
         // receive raw materials: 2000 kg sheet, 300 kg zinc
         $this->inventory->receive($sheet, '2000', now()->subDays(5));

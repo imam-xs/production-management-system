@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\UserModel;
 use Illuminate\Database\Seeder;
 
 class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::query()->updateOrCreate(
+        UserModel::query()->updateOrCreate(
             ['email' => 'admin@pms.test'],
             [
                 'name' => 'Plant Administrator',

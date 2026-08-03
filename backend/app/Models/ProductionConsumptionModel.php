@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\ProductionConsumptionFactory;
+use Database\Factories\ProductionConsumptionModelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,10 +15,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $input_batch_id
  * @property string $quantity_consumed
  */
-class ProductionConsumption extends Model
+class ProductionConsumptionModel extends Model
 {
-    /** @use HasFactory<ProductionConsumptionFactory> */
+    /** @use HasFactory<ProductionConsumptionModelFactory> */
     use HasFactory;
+
+    // the class name no longer matches the table, so name it explicitly
+    protected $table = 'production_consumptions';
 
     protected $fillable = [
         'production_order_id',
@@ -37,18 +40,18 @@ class ProductionConsumption extends Model
     }
 
     /**
-     * @return BelongsTo<ProductionOrder, $this>
+     * @return BelongsTo<ProductionOrderModel, $this>
      */
     public function productionOrder(): BelongsTo
     {
-        return $this->belongsTo(ProductionOrder::class);
+        return $this->belongsTo(ProductionOrderModel::class);
     }
 
     /**
-     * @return BelongsTo<Batch, $this>
+     * @return BelongsTo<BatchModel, $this>
      */
     public function inputBatch(): BelongsTo
     {
-        return $this->belongsTo(Batch::class, 'input_batch_id');
+        return $this->belongsTo(BatchModel::class, 'input_batch_id');
     }
 }

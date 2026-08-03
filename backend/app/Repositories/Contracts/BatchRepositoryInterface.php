@@ -4,8 +4,8 @@ namespace App\Repositories\Contracts;
 
 use App\Enums\BatchOrigin;
 use App\Enums\ItemType;
-use App\Models\Batch;
-use App\Models\Item;
+use App\Models\BatchModel;
+use App\Models\ItemModel;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -13,7 +13,7 @@ interface BatchRepositoryInterface
 {
     /**
      * @param  bool  $availableOnly  Only batches with stock left — the FIFO-relevant view.
-     * @return LengthAwarePaginator<int, Batch>
+     * @return LengthAwarePaginator<int, BatchModel>
      */
     public function paginate(
         ?string $search = null,
@@ -27,25 +27,25 @@ interface BatchRepositoryInterface
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function findByIdOrFail(int $id): Batch;
+    public function findByIdOrFail(int $id): BatchModel;
 
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public function create(array $attributes): Batch;
+    public function create(array $attributes): BatchModel;
 
     /**
-     * @return Collection<int, Batch>
+     * @return Collection<int, BatchModel>
      */
     public function lockAvailableFifo(int $itemId): Collection;
 
     // Reduce a batch's remaining quantity. Assumes the batch is already locked
-    public function decrementRemaining(Batch $batch, string $quantity): void;
+    public function decrementRemaining(BatchModel $batch, string $quantity): void;
 
-    public function hasRemainingStock(Item $item): bool;
+    public function hasRemainingStock(ItemModel $item): bool;
 
     // whether the item has ever been batched, regardless of what is left
-    public function hasAnyBatch(Item $item): bool;
+    public function hasAnyBatch(ItemModel $item): bool;
 
     public function countProducedOn(\DateTimeInterface $date, ?ItemType $type = null): int;
 }

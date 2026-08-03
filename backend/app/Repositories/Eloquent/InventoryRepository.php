@@ -4,10 +4,10 @@ namespace App\Repositories\Eloquent;
 
 use App\Enums\ItemType;
 use App\Enums\MovementType;
-use App\Models\Batch;
-use App\Models\InventoryMovement;
-use App\Models\Item;
-use App\Models\ItemStock;
+use App\Models\BatchModel;
+use App\Models\InventoryMovementModel;
+use App\Models\ItemModel;
+use App\Models\ItemStockModel;
 use App\Repositories\Contracts\InventoryRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,7 +18,7 @@ class InventoryRepository implements InventoryRepositoryInterface
 {
     public function stockLevels(?ItemType $type = null): Collection
     {
-        return Item::query()
+        return ItemModel::query()
             ->with(['unit', 'stock'])
             ->when($type instanceof ItemType, fn (Builder $q): Builder => $q->where('type', $type))
             ->orderBy('type')
@@ -26,20 +26,20 @@ class InventoryRepository implements InventoryRepositoryInterface
             ->get();
     }
 
-    public function stockFor(Item $item): ItemStock
+    public function stockFor(ItemModel $item): ItemStockModel
     {
-        return ItemStock::query()->firstOrCreate(
+        return ItemStockModel::query()->firstOrCreate(
             ['item_id' => $item->id],
             ['quantity_on_hand' => '0'],
         );
     }
 
-    public function lockStockFor(Item $item): ItemStock
+    public function lockStockFor(ItemModel $item): ItemStockModel
     {
         $this->stockFor($item);
 
-        /** @var ItemStock $locked */
-        $locked = ItemStock::query()
+        /** @var ItemStockModel $locked */
+        $locked = ItemStockModel::query()
             ->where('item_id', $item->id)
             ->lockForUpdate()
             ->firstOrFail();
@@ -47,7 +47,7 @@ class InventoryRepository implements InventoryRepositoryInterface
         return $locked;
     }
 
-    public function adjustStock(ItemStock $stock, string $signedQuantity): string
+    public function adjustStock(ItemStockModel $stock, string $signedQuantity): string
     {
         $balance = bcadd((string) $stock->quantity_on_hand, $signedQuantity, 4);
 
@@ -58,15 +58,15 @@ class InventoryRepository implements InventoryRepositoryInterface
     }
 
     public function recordMovement(
-        Item $item,
-        ?Batch $batch,
+        ItemModel $item,
+        ?BatchModel $batch,
         MovementType $type,
         string $signedQuantity,
         string $balanceAfter,
         ?Model $reference = null,
         ?string $note = null,
-    ): InventoryMovement {
-        return InventoryMovement::query()->create([
+    ): InventoryMovementModel {
+        return InventoryMovementModel::query()->create([
             'item_id' => $item->id,
             'batch_id' => $batch?->id,
             'type' => $type,
@@ -78,9 +78,9 @@ class InventoryRepository implements InventoryRepositoryInterface
         ]);
     }
 
-    public function paginateMovements(Item $item, int $perPage = 15): LengthAwarePaginator
+    public function paginateMovements(ItemModel $item, int $perPage = 15): LengthAwarePaginator
     {
-        return InventoryMovement::query()
+        return InventoryMovementModel::query()
             ->with(['batch', 'item.unit'])
             ->where('item_id', $item->id)
             ->orderByDesc('created_at')

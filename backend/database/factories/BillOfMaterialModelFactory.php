@@ -2,16 +2,16 @@
 
 namespace Database\Factories;
 
-use App\Models\BillOfMaterial;
-use App\Models\Item;
+use App\Models\BillOfMaterialModel;
+use App\Models\ItemModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<BillOfMaterial>
+ * @extends Factory<BillOfMaterialModel>
  */
-class BillOfMaterialFactory extends Factory
+class BillOfMaterialModelFactory extends Factory
 {
-    protected $model = BillOfMaterial::class;
+    protected $model = BillOfMaterialModel::class;
 
     /**
      * @return array<string, mixed>
@@ -19,13 +19,13 @@ class BillOfMaterialFactory extends Factory
     public function definition(): array
     {
         return [
-            'output_item_id' => Item::factory()->semiFinished(),
-            'input_item_id' => Item::factory()->rawMaterial(),
+            'output_item_id' => ItemModel::factory()->semiFinished(),
+            'input_item_id' => ItemModel::factory()->rawMaterial(),
             'quantity_per_unit' => $this->faker->randomFloat(4, 0.5, 5),
         ];
     }
 
-    public function recipe(Item $output, Item $input, float $quantityPerUnit): self
+    public function recipe(ItemModel $output, ItemModel $input, float $quantityPerUnit): self
     {
         return $this->state([
             'output_item_id' => $output->id,

@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ItemType;
-use App\Models\Item;
+use App\Models\ItemModel;
 use App\Repositories\Contracts\BatchRepositoryInterface;
 use App\Repositories\Contracts\BillOfMaterialRepositoryInterface;
 use App\Repositories\Contracts\ItemRepositoryInterface;
@@ -28,7 +28,7 @@ class ItemService
     ) {}
 
     /**
-     * @return LengthAwarePaginator<int, Item>
+     * @return LengthAwarePaginator<int, ItemModel>
      */
     public function list(
         ItemType $type,
@@ -42,7 +42,7 @@ class ItemService
     }
 
     /**
-     * @return Collection<int, Item>
+     * @return Collection<int, ItemModel>
      */
     public function allOfType(ItemType $type): Collection
     {
@@ -52,12 +52,12 @@ class ItemService
     /**
      * @throws ModelNotFoundException
      */
-    public function findOrFail(int $id, ItemType $type): Item
+    public function findOrFail(int $id, ItemType $type): ItemModel
     {
         $item = $this->items->findByIdAndType($id, $type);
 
         if ($item === null) {
-            throw (new ModelNotFoundException)->setModel(Item::class, [$id]);
+            throw (new ModelNotFoundException)->setModel(ItemModel::class, [$id]);
         }
 
         return $item;
@@ -66,7 +66,7 @@ class ItemService
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public function create(ItemType $type, array $attributes): Item
+    public function create(ItemType $type, array $attributes): ItemModel
     {
         // $type wins regardless of what $attributes contains — a raw-material
         // endpoint can never be used to create a finished product.
@@ -76,7 +76,7 @@ class ItemService
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public function update(Item $item, array $attributes): Item
+    public function update(ItemModel $item, array $attributes): ItemModel
     {
         // type is immutable after creation: changing it would orphan the
         // item's existing batches and bill-of-materials lines, which are all
@@ -97,7 +97,7 @@ class ItemService
      * A product that has been used is retired by clearing `is_active`, not by
      * deleting it — the records that name it must keep resolving.
      */
-    public function delete(Item $item): void
+    public function delete(ItemModel $item): void
     {
         if ($this->batches->hasRemainingStock($item)) {
             abort(409, sprintf('Cannot delete %s (%s) while it still has inventory on hand.', $item->name, $item->sku));
@@ -115,7 +115,7 @@ class ItemService
     }
 
     /**
-     * @return Collection<int, Item>
+     * @return Collection<int, ItemModel>
      */
     public function lowStock(?ItemType $type = null): Collection
     {

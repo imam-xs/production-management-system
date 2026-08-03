@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\ProductionEventLog;
-use App\Models\ProductionOrder;
+use App\Models\ProductionEventLogModel;
+use App\Models\ProductionOrderModel;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Queue\Queueable;
@@ -26,7 +26,7 @@ class RecordProductionCompleted implements ShouldQueue
         public readonly string $occurredAt,
     ) {}
 
-    public static function for(ProductionOrder $order): self
+    public static function for(ProductionOrderModel $order): self
     {
         $order->loadMissing(['outputItem', 'outputBatch', 'consumptions.inputBatch.item']);
 
@@ -58,7 +58,7 @@ class RecordProductionCompleted implements ShouldQueue
     public function handle(): void
     {
         try {
-            ProductionEventLog::query()->create([
+            ProductionEventLogModel::query()->create([
                 'event_id' => $this->eventId,
                 'event_type' => 'production.completed',
                 'routing_key' => $this->routingKey,
@@ -91,7 +91,7 @@ class RecordProductionCompleted implements ShouldQueue
         $output = $this->payload['output'] ?? [];
 
         Log::info(sprintf(
-            '[notification] Batch %s of %s (%s %s) is ready.',
+            '[notification] BatchModel %s of %s (%s %s) is ready.',
             $output['batch_number'] ?? '?',
             $output['item_name'] ?? '?',
             $output['quantity'] ?? '?',

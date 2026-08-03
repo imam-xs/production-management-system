@@ -3,17 +3,17 @@
 namespace Database\Factories;
 
 use App\Enums\BatchOrigin;
-use App\Models\Batch;
-use App\Models\Item;
-use App\Models\ProductionOrder;
+use App\Models\BatchModel;
+use App\Models\ItemModel;
+use App\Models\ProductionOrderModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Batch>
+ * @extends Factory<BatchModel>
  */
-class BatchFactory extends Factory
+class BatchModelFactory extends Factory
 {
-    protected $model = Batch::class;
+    protected $model = BatchModel::class;
 
     /**
      * @return array<string, mixed>
@@ -24,7 +24,7 @@ class BatchFactory extends Factory
 
         return [
             'batch_number' => strtoupper($this->faker->unique()->bothify('RM-########-####')),
-            'item_id' => Item::factory()->rawMaterial(),
+            'item_id' => ItemModel::factory()->rawMaterial(),
             'quantity_produced' => $quantity,
             'quantity_remaining' => $quantity,
             'origin' => BatchOrigin::Purchase,
@@ -46,7 +46,7 @@ class BatchFactory extends Factory
         return $this->state(['quantity_remaining' => 0]);
     }
 
-    public function forItem(Item $item): self
+    public function forItem(ItemModel $item): self
     {
         return $this->state(['item_id' => $item->id]);
     }
@@ -54,7 +54,7 @@ class BatchFactory extends Factory
     /**
      * A manufactured batch, linked to the run that created it.
      */
-    public function produced(ProductionOrder $order): self
+    public function produced(ProductionOrderModel $order): self
     {
         return $this->state([
             'origin' => BatchOrigin::Production,

@@ -4,16 +4,16 @@ namespace Database\Factories;
 
 use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
-use App\Models\Item;
-use App\Models\ProductionOrder;
+use App\Models\ItemModel;
+use App\Models\ProductionOrderModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ProductionOrder>
+ * @extends Factory<ProductionOrderModel>
  */
-class ProductionOrderFactory extends Factory
+class ProductionOrderModelFactory extends Factory
 {
-    protected $model = ProductionOrder::class;
+    protected $model = ProductionOrderModel::class;
 
     /**
      * @return array<string, mixed>
@@ -23,7 +23,7 @@ class ProductionOrderFactory extends Factory
         return [
             'order_number' => strtoupper($this->faker->unique()->bothify('PO-########-####')),
             'stage' => ProductionStage::RawToSemiFinished,
-            'output_item_id' => Item::factory()->semiFinished(),
+            'output_item_id' => ItemModel::factory()->semiFinished(),
             'planned_quantity' => $this->faker->randomFloat(4, 10, 100),
             'produced_quantity' => 0,
             'status' => ProductionOrderStatus::Pending,
@@ -36,7 +36,7 @@ class ProductionOrderFactory extends Factory
     {
         return $this->state([
             'stage' => $stage,
-            'output_item_id' => Item::factory()->ofType($stage->outputType()),
+            'output_item_id' => ItemModel::factory()->ofType($stage->outputType()),
         ]);
     }
 

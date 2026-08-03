@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\UserModel;
 
 return [
 
@@ -46,7 +46,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | User Providers
+    | UserModel Providers
     |--------------------------------------------------------------------------
     |
     | All authentication guards have a user provider, which defines how the
@@ -64,7 +64,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => env('AUTH_MODEL', UserModel::class),
         ],
 
         // 'users' => [

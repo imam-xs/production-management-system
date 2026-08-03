@@ -4,8 +4,8 @@ namespace App\Repositories\Eloquent;
 
 use App\Enums\BatchOrigin;
 use App\Enums\ItemType;
-use App\Models\Batch;
-use App\Models\Item;
+use App\Models\BatchModel;
+use App\Models\ItemModel;
 use App\Repositories\Contracts\BatchRepositoryInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -22,7 +22,7 @@ class BatchRepository implements BatchRepositoryInterface
         bool $availableOnly = false,
         int $perPage = 15,
     ): LengthAwarePaginator {
-        return Batch::query()
+        return BatchModel::query()
             ->with(['item.unit', 'productionOrder'])
             ->when($itemId !== null, fn (Builder $q): Builder => $q->where('item_id', $itemId))
             ->when(
@@ -40,19 +40,19 @@ class BatchRepository implements BatchRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function findByIdOrFail(int $id): Batch
+    public function findByIdOrFail(int $id): BatchModel
     {
-        return Batch::query()->with(['item.unit', 'productionOrder'])->findOrFail($id);
+        return BatchModel::query()->with(['item.unit', 'productionOrder'])->findOrFail($id);
     }
 
-    public function create(array $attributes): Batch
+    public function create(array $attributes): BatchModel
     {
-        return Batch::query()->create($attributes);
+        return BatchModel::query()->create($attributes);
     }
 
     public function lockAvailableFifo(int $itemId): Collection
     {
-        return Batch::query()
+        return BatchModel::query()
             ->where('item_id', $itemId)
             ->where('quantity_remaining', '>', 0)
             // Oldest stock leaves first; id breaks ties deterministically so the
@@ -63,30 +63,30 @@ class BatchRepository implements BatchRepositoryInterface
             ->get();
     }
 
-    public function decrementRemaining(Batch $batch, string $quantity): void
+    public function decrementRemaining(BatchModel $batch, string $quantity): void
     {
         $batch->quantity_remaining = bcsub((string) $batch->quantity_remaining, $quantity, 4);
         $batch->save();
     }
 
-    public function hasRemainingStock(Item $item): bool
+    public function hasRemainingStock(ItemModel $item): bool
     {
-        return Batch::query()
+        return BatchModel::query()
             ->where('item_id', $item->id)
             ->where('quantity_remaining', '>', 0)
             ->exists();
     }
 
-    public function hasAnyBatch(Item $item): bool
+    public function hasAnyBatch(ItemModel $item): bool
     {
-        return Batch::query()
+        return BatchModel::query()
             ->where('item_id', $item->id)
             ->exists();
     }
 
     public function countProducedOn(DateTimeInterface $date, ?ItemType $type = null): int
     {
-        return Batch::query()
+        return BatchModel::query()
             ->when(
                 $type instanceof ItemType,
                 fn (Builder $q): Builder => $q->whereHas('item', fn (Builder $i): Builder => $i->where('type', $type)),

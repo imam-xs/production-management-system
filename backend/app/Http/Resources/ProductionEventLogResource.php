@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Models\ProductionEventLog;
+use App\Models\ProductionEventLogModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property ProductionEventLog $resource
+ * @property ProductionEventLogModel $resource
  */
 class ProductionEventLogResource extends JsonResource
 {

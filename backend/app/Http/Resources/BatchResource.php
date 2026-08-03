@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Batch;
+use App\Models\BatchModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Batch $resource
+ * @property BatchModel $resource
  */
 class BatchResource extends JsonResource
 {

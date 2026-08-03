@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\ItemType;
-use App\Models\Item;
-use App\Models\Unit;
+use App\Models\ItemModel;
+use App\Models\UnitModel;
 use Illuminate\Database\Seeder;
 
 // steel fabrication catalogue
@@ -12,7 +12,7 @@ class ItemSeeder extends Seeder
 {
     public function run(): void
     {
-        $units = Unit::query()->pluck('id', 'code');
+        $units = UnitModel::query()->pluck('id', 'code');
 
         $items = [
             // raw materials — enter inventory by purchase receipt
@@ -30,7 +30,7 @@ class ItemSeeder extends Seeder
         ];
 
         foreach ($items as $item) {
-            Item::query()->updateOrCreate(
+            ItemModel::query()->updateOrCreate(
                 ['sku' => $item['sku']],
                 [
                     'name' => $item['name'],

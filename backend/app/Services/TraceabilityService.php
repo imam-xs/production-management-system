@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Batch;
+use App\Models\BatchModel;
 use App\Repositories\Contracts\ProductionOrderRepositoryInterface;
 
 // walks the consumption graph a production batch sits in
@@ -17,7 +17,7 @@ class TraceabilityService
     /**
      * @return array<string, mixed>
      */
-    public function traceUpstream(Batch $batch, int $depth = 0): array
+    public function traceUpstream(BatchModel $batch, int $depth = 0): array
     {
         $node = $this->batchNode($batch);
 
@@ -44,7 +44,7 @@ class TraceabilityService
     /**
      * @return array<string, mixed>
      */
-    public function traceDownstream(Batch $batch, int $depth = 0): array
+    public function traceDownstream(BatchModel $batch, int $depth = 0): array
     {
         $node = $this->batchNode($batch);
 
@@ -70,7 +70,7 @@ class TraceabilityService
     /**
      * @return array<string, mixed>
      */
-    private function batchNode(Batch $batch): array
+    private function batchNode(BatchModel $batch): array
     {
         return [
             'batch_number' => $batch->batch_number,

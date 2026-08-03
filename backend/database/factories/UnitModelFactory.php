@@ -2,15 +2,15 @@
 
 namespace Database\Factories;
 
-use App\Models\Unit;
+use App\Models\UnitModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Unit>
+ * @extends Factory<UnitModel>
  */
-class UnitFactory extends Factory
+class UnitModelFactory extends Factory
 {
-    protected $model = Unit::class;
+    protected $model = UnitModel::class;
 
     /**
      * @return array<string, mixed>

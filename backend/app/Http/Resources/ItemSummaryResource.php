@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Item;
+use App\Models\ItemModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,7 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * inventory state. Keeps those payloads flat instead of recursing into
  * ItemResource's own stock lookup.
  *
- * @property Item $resource
+ * @property ItemModel $resource
  */
 class ItemSummaryResource extends JsonResource
 {

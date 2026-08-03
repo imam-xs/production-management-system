@@ -2,13 +2,13 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Item;
-use App\Models\ItemStock;
+use App\Models\ItemModel;
+use App\Models\ItemStockModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Item $resource
+ * @property ItemModel $resource
  */
 class ItemResource extends JsonResource
 {
@@ -24,10 +24,10 @@ class ItemResource extends JsonResource
         // Larastan types a HasOne access as non-nullable, which is wrong here:
         // the relation genuinely resolves to null until that first movement.
         // The annotation restores the real type.
-        /** @var ItemStock|null $stock */
+        /** @var ItemStockModel|null $stock */
         $stock = $this->resource->stock;
 
-        $quantityOnHand = $stock instanceof ItemStock
+        $quantityOnHand = $stock instanceof ItemStockModel
             ? (string) $stock->quantity_on_hand
             : '0.0000';
 

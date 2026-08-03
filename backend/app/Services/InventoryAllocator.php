@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Batch;
-use App\Models\Item;
+use App\Models\BatchModel;
+use App\Models\ItemModel;
 use App\Repositories\Contracts\BatchRepositoryInterface;
 use Illuminate\Validation\ValidationException;
 
@@ -17,9 +17,9 @@ class InventoryAllocator
     ) {}
 
     /**
-     * @return list<array{batch: Batch, quantity: string}>
+     * @return list<array{batch: BatchModel, quantity: string}>
      */
-    public function allocate(Item $item, string $requiredQuantity): array
+    public function allocate(ItemModel $item, string $requiredQuantity): array
     {
         $available = $this->batches->lockAvailableFifo($item->id);
 

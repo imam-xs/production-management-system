@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Unit;
+use App\Models\UnitModel;
 use Illuminate\Database\Seeder;
 
 class UnitSeeder extends Seeder
@@ -18,7 +18,7 @@ class UnitSeeder extends Seeder
         ];
 
         foreach ($units as $unit) {
-            Unit::query()->updateOrCreate(['code' => $unit['code']], $unit);
+            UnitModel::query()->updateOrCreate(['code' => $unit['code']], $unit);
         }
     }
 }

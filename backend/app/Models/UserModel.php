@@ -2,18 +2,21 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
+use Database\Factories\UserModelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class UserModel extends Authenticatable
 {
     use HasApiTokens;
 
-    /** @use HasFactory<UserFactory> */
+    // the class name no longer matches the table, so name it explicitly
+    protected $table = 'users';
+
+    /** @use HasFactory<UserModelFactory> */
     use HasFactory;
 
     use Notifiable;
@@ -47,10 +50,10 @@ class User extends Authenticatable
     }
 
     /**
-     * @return HasMany<ProductionOrder, $this>
+     * @return HasMany<ProductionOrderModel, $this>
      */
     public function productionOrders(): HasMany
     {
-        return $this->hasMany(ProductionOrder::class, 'created_by');
+        return $this->hasMany(ProductionOrderModel::class, 'created_by');
     }
 }

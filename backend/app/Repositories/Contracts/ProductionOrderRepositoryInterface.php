@@ -4,16 +4,16 @@ namespace App\Repositories\Contracts;
 
 use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
-use App\Models\Batch;
-use App\Models\ProductionConsumption;
-use App\Models\ProductionOrder;
+use App\Models\BatchModel;
+use App\Models\ProductionConsumptionModel;
+use App\Models\ProductionOrderModel;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface ProductionOrderRepositoryInterface
 {
     /**
-     * @return LengthAwarePaginator<int, ProductionOrder>
+     * @return LengthAwarePaginator<int, ProductionOrderModel>
      */
     public function paginate(
         ?string $search = null,
@@ -26,32 +26,32 @@ interface ProductionOrderRepositoryInterface
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function findByIdOrFail(int $id): ProductionOrder;
+    public function findByIdOrFail(int $id): ProductionOrderModel;
 
-    public function lockById(int $id): ?ProductionOrder;
+    public function lockById(int $id): ?ProductionOrderModel;
 
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public function create(array $attributes): ProductionOrder;
+    public function create(array $attributes): ProductionOrderModel;
 
-    public function markCompleted(ProductionOrder $order, string $producedQuantity): ProductionOrder;
+    public function markCompleted(ProductionOrderModel $order, string $producedQuantity): ProductionOrderModel;
 
     public function recordConsumption(
-        ProductionOrder $order,
-        Batch $inputBatch,
+        ProductionOrderModel $order,
+        BatchModel $inputBatch,
         string $quantity,
-    ): ProductionConsumption;
+    ): ProductionConsumptionModel;
 
     /**
-     * @return Collection<int, ProductionConsumption>
+     * @return Collection<int, ProductionConsumptionModel>
      */
-    public function consumptionsWithBatches(ProductionOrder $order): Collection;
+    public function consumptionsWithBatches(ProductionOrderModel $order): Collection;
 
     /**
-     * @return Collection<int, ProductionConsumption>
+     * @return Collection<int, ProductionConsumptionModel>
      */
-    public function consumptionsOfBatch(Batch $batch): Collection;
+    public function consumptionsOfBatch(BatchModel $batch): Collection;
 
     public function countCreatedOn(\DateTimeInterface $date): int;
 }

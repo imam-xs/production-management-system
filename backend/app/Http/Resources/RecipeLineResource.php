@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources;
 
-use App\Models\BillOfMaterial;
-use App\Models\ItemStock;
+use App\Models\BillOfMaterialModel;
+use App\Models\ItemStockModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,7 +19,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * Carries the input's current stock so the caller can show "needs 250 kg, have
  * 500" without a second round trip.
  *
- * @property BillOfMaterial $resource
+ * @property BillOfMaterialModel $resource
  */
 class RecipeLineResource extends JsonResource
 {
@@ -32,13 +32,13 @@ class RecipeLineResource extends JsonResource
 
         // Larastan types the HasOne as non-nullable; at runtime the stock row
         // does not exist until the item's first movement.
-        /** @var ItemStock|null $stock */
+        /** @var ItemStockModel|null $stock */
         $stock = $input->stock;
 
         return [
             'input_item' => new ItemSummaryResource($input),
             'quantity_per_unit' => (string) $this->resource->quantity_per_unit,
-            'quantity_on_hand' => $stock instanceof ItemStock ? (string) $stock->quantity_on_hand : '0.0000',
+            'quantity_on_hand' => $stock instanceof ItemStockModel ? (string) $stock->quantity_on_hand : '0.0000',
         ];
     }
 }

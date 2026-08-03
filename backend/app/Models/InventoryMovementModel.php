@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MovementType;
-use Database\Factories\InventoryMovementFactory;
+use Database\Factories\InventoryMovementModelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,10 +20,13 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string $balance_after
  * @property string|null $note
  */
-class InventoryMovement extends Model
+class InventoryMovementModel extends Model
 {
-    /** @use HasFactory<InventoryMovementFactory> */
+    /** @use HasFactory<InventoryMovementModelFactory> */
     use HasFactory;
+
+    // the class name no longer matches the table, so name it explicitly
+    protected $table = 'inventory_movements';
 
     protected $fillable = [
         'item_id',
@@ -49,25 +52,25 @@ class InventoryMovement extends Model
     }
 
     /**
-     * @return BelongsTo<Item, $this>
+     * @return BelongsTo<ItemModel, $this>
      */
     public function item(): BelongsTo
     {
-        // withTrashed — see Batch::item(). A ledger entry must never lose the
+        // withTrashed — see BatchModel::item(). A ledger entry must never lose the
         // name of what it moved.
-        return $this->belongsTo(Item::class)->withTrashed();
+        return $this->belongsTo(ItemModel::class)->withTrashed();
     }
 
     /**
-     * @return BelongsTo<Batch, $this>
+     * @return BelongsTo<BatchModel, $this>
      */
     public function batch(): BelongsTo
     {
-        return $this->belongsTo(Batch::class);
+        return $this->belongsTo(BatchModel::class);
     }
 
     /**
-     * What caused this movement — typically a ProductionOrder.
+     * What caused this movement — typically a ProductionOrderModel.
      *
      * @return MorphTo<Model, $this>
      */

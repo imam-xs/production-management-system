@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Unit;
+use App\Models\UnitModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Unit $resource
+ * @property UnitModel $resource
  */
 class UnitResource extends JsonResource
 {

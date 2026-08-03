@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enums\BatchOrigin;
 use Carbon\CarbonInterface;
-use Database\Factories\BatchFactory;
+use Database\Factories\BatchModelFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,9 +23,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $production_order_id
  * @property CarbonInterface $produced_at
  */
-class Batch extends Model
+class BatchModel extends Model
 {
-    /** @use HasFactory<BatchFactory> */
+    /** @use HasFactory<BatchModelFactory> */
     use HasFactory;
 
     protected $table = 'batches';
@@ -54,44 +54,44 @@ class Batch extends Model
     }
 
     /**
-     * @return BelongsTo<Item, $this>
+     * @return BelongsTo<ItemModel, $this>
      */
     public function item(): BelongsTo
     {
         // withTrashed: a batch is history, and history must keep resolving even
         // if the item was later retired. Without this the relation returns null
         // for a soft-deleted item and every trace through this batch breaks.
-        return $this->belongsTo(Item::class)->withTrashed();
+        return $this->belongsTo(ItemModel::class)->withTrashed();
     }
 
     /**
      * The run that created this batch — null for purchased material, which is
      * where the upstream trace terminates.
      *
-     * @return BelongsTo<ProductionOrder, $this>
+     * @return BelongsTo<ProductionOrderModel, $this>
      */
     public function productionOrder(): BelongsTo
     {
-        return $this->belongsTo(ProductionOrder::class);
+        return $this->belongsTo(ProductionOrderModel::class);
     }
 
     /**
      * Runs that consumed this batch — the downstream ("where did it go?")
      * direction of traceability.
      *
-     * @return HasMany<ProductionConsumption, $this>
+     * @return HasMany<ProductionConsumptionModel, $this>
      */
     public function consumedBy(): HasMany
     {
-        return $this->hasMany(ProductionConsumption::class, 'input_batch_id');
+        return $this->hasMany(ProductionConsumptionModel::class, 'input_batch_id');
     }
 
     /**
-     * @return HasMany<InventoryMovement, $this>
+     * @return HasMany<InventoryMovementModel, $this>
      */
     public function movements(): HasMany
     {
-        return $this->hasMany(InventoryMovement::class);
+        return $this->hasMany(InventoryMovementModel::class, 'batch_id');
     }
 
     /**

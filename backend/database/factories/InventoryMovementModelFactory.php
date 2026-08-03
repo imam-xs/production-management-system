@@ -3,17 +3,17 @@
 namespace Database\Factories;
 
 use App\Enums\MovementType;
-use App\Models\Batch;
-use App\Models\InventoryMovement;
-use App\Models\Item;
+use App\Models\BatchModel;
+use App\Models\InventoryMovementModel;
+use App\Models\ItemModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<InventoryMovement>
+ * @extends Factory<InventoryMovementModel>
  */
-class InventoryMovementFactory extends Factory
+class InventoryMovementModelFactory extends Factory
 {
-    protected $model = InventoryMovement::class;
+    protected $model = InventoryMovementModel::class;
 
     /**
      * @return array<string, mixed>
@@ -23,8 +23,8 @@ class InventoryMovementFactory extends Factory
         $quantity = $this->faker->randomFloat(4, 1, 500);
 
         return [
-            'item_id' => Item::factory()->rawMaterial(),
-            'batch_id' => Batch::factory(),
+            'item_id' => ItemModel::factory()->rawMaterial(),
+            'batch_id' => BatchModel::factory(),
             'type' => MovementType::Receipt,
             'quantity' => $quantity,
             'balance_after' => $quantity,

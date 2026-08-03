@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
-use App\Models\User;
+use App\Models\UserModel;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,8 +17,8 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
 
-        /** @var User|null $user */
-        $user = User::query()->where('email', $credentials['email'])->first();
+        /** @var UserModel|null $user */
+        $user = UserModel::query()->where('email', $credentials['email'])->first();
 
         if ($user === null || ! Hash::check($credentials['password'], $user->password)) {
             throw new AuthenticationException('These credentials do not match our records.');

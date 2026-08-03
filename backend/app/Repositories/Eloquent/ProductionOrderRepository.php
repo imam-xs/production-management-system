@@ -4,9 +4,9 @@ namespace App\Repositories\Eloquent;
 
 use App\Enums\ProductionOrderStatus;
 use App\Enums\ProductionStage;
-use App\Models\Batch;
-use App\Models\ProductionConsumption;
-use App\Models\ProductionOrder;
+use App\Models\BatchModel;
+use App\Models\ProductionConsumptionModel;
+use App\Models\ProductionOrderModel;
 use App\Repositories\Contracts\ProductionOrderRepositoryInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -22,7 +22,7 @@ class ProductionOrderRepository implements ProductionOrderRepositoryInterface
         ?int $outputItemId = null,
         int $perPage = 15,
     ): LengthAwarePaginator {
-        return ProductionOrder::query()
+        return ProductionOrderModel::query()
             ->with(['outputItem.unit', 'outputBatch', 'creator'])
             ->when($stage instanceof ProductionStage, fn (Builder $q): Builder => $q->where('stage', $stage))
             ->when($status instanceof ProductionOrderStatus, fn (Builder $q): Builder => $q->where('status', $status))
@@ -36,25 +36,25 @@ class ProductionOrderRepository implements ProductionOrderRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function findByIdOrFail(int $id): ProductionOrder
+    public function findByIdOrFail(int $id): ProductionOrderModel
     {
-        return ProductionOrder::query()
+        return ProductionOrderModel::query()
             ->with(['outputItem.unit', 'outputBatch', 'creator', 'consumptions.inputBatch.item'])
             ->findOrFail($id);
     }
 
-    public function lockById(int $id): ?ProductionOrder
+    public function lockById(int $id): ?ProductionOrderModel
     {
         // No eager loading: a locking read should touch exactly the row it locks.
-        return ProductionOrder::query()->lockForUpdate()->find($id);
+        return ProductionOrderModel::query()->lockForUpdate()->find($id);
     }
 
-    public function create(array $attributes): ProductionOrder
+    public function create(array $attributes): ProductionOrderModel
     {
-        return ProductionOrder::query()->create($attributes);
+        return ProductionOrderModel::query()->create($attributes);
     }
 
-    public function markCompleted(ProductionOrder $order, string $producedQuantity): ProductionOrder
+    public function markCompleted(ProductionOrderModel $order, string $producedQuantity): ProductionOrderModel
     {
         $order->fill([
             'status' => ProductionOrderStatus::Completed,
@@ -66,29 +66,29 @@ class ProductionOrderRepository implements ProductionOrderRepositoryInterface
     }
 
     public function recordConsumption(
-        ProductionOrder $order,
-        Batch $inputBatch,
+        ProductionOrderModel $order,
+        BatchModel $inputBatch,
         string $quantity,
-    ): ProductionConsumption {
-        return ProductionConsumption::query()->create([
+    ): ProductionConsumptionModel {
+        return ProductionConsumptionModel::query()->create([
             'production_order_id' => $order->id,
             'input_batch_id' => $inputBatch->id,
             'quantity_consumed' => $quantity,
         ]);
     }
 
-    public function consumptionsWithBatches(ProductionOrder $order): Collection
+    public function consumptionsWithBatches(ProductionOrderModel $order): Collection
     {
-        return ProductionConsumption::query()
+        return ProductionConsumptionModel::query()
             ->with(['inputBatch.item.unit', 'inputBatch.productionOrder'])
             ->where('production_order_id', $order->id)
             ->orderBy('id')
             ->get();
     }
 
-    public function consumptionsOfBatch(Batch $batch): Collection
+    public function consumptionsOfBatch(BatchModel $batch): Collection
     {
-        return ProductionConsumption::query()
+        return ProductionConsumptionModel::query()
             ->with(['productionOrder.outputItem.unit', 'productionOrder.outputBatch'])
             ->where('input_batch_id', $batch->id)
             ->orderBy('id')
@@ -97,7 +97,7 @@ class ProductionOrderRepository implements ProductionOrderRepositoryInterface
 
     public function countCreatedOn(DateTimeInterface $date): int
     {
-        return ProductionOrder::query()
+        return ProductionOrderModel::query()
             ->whereDate('created_at', $date->format('Y-m-d'))
             ->count();
     }

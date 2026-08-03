@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\BillOfMaterialFactory;
+use Database\Factories\BillOfMaterialModelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,9 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $input_item_id
  * @property string $quantity_per_unit
  */
-class BillOfMaterial extends Model
+class BillOfMaterialModel extends Model
 {
-    /** @use HasFactory<BillOfMaterialFactory> */
+    /** @use HasFactory<BillOfMaterialModelFactory> */
     use HasFactory;
 
     protected $table = 'bill_of_materials';
@@ -39,18 +39,18 @@ class BillOfMaterial extends Model
     }
 
     /**
-     * @return BelongsTo<Item, $this>
+     * @return BelongsTo<ItemModel, $this>
      */
     public function outputItem(): BelongsTo
     {
-        return $this->belongsTo(Item::class, 'output_item_id');
+        return $this->belongsTo(ItemModel::class, 'output_item_id');
     }
 
     /**
-     * @return BelongsTo<Item, $this>
+     * @return BelongsTo<ItemModel, $this>
      */
     public function inputItem(): BelongsTo
     {
-        return $this->belongsTo(Item::class, 'input_item_id');
+        return $this->belongsTo(ItemModel::class, 'input_item_id');
     }
 }

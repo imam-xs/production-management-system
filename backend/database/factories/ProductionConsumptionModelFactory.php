@@ -2,17 +2,17 @@
 
 namespace Database\Factories;
 
-use App\Models\Batch;
-use App\Models\ProductionConsumption;
-use App\Models\ProductionOrder;
+use App\Models\BatchModel;
+use App\Models\ProductionConsumptionModel;
+use App\Models\ProductionOrderModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ProductionConsumption>
+ * @extends Factory<ProductionConsumptionModel>
  */
-class ProductionConsumptionFactory extends Factory
+class ProductionConsumptionModelFactory extends Factory
 {
-    protected $model = ProductionConsumption::class;
+    protected $model = ProductionConsumptionModel::class;
 
     /**
      * @return array<string, mixed>
@@ -20,13 +20,13 @@ class ProductionConsumptionFactory extends Factory
     public function definition(): array
     {
         return [
-            'production_order_id' => ProductionOrder::factory(),
-            'input_batch_id' => Batch::factory(),
+            'production_order_id' => ProductionOrderModel::factory(),
+            'input_batch_id' => BatchModel::factory(),
             'quantity_consumed' => $this->faker->randomFloat(4, 1, 50),
         ];
     }
 
-    public function edge(ProductionOrder $order, Batch $inputBatch, float $quantity): self
+    public function edge(ProductionOrderModel $order, BatchModel $inputBatch, float $quantity): self
     {
         return $this->state([
             'production_order_id' => $order->id,

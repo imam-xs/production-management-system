@@ -22,8 +22,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonInterface $occurred_at
  * @property CarbonInterface $processed_at
  */
-class ProductionEventLog extends Model
+class ProductionEventLogModel extends Model
 {
+    // the class name no longer matches the table, so name it explicitly
+    protected $table = 'production_event_logs';
+
     protected $fillable = [
         'event_id',
         'event_type',
@@ -49,10 +52,10 @@ class ProductionEventLog extends Model
     }
 
     /**
-     * @return BelongsTo<ProductionOrder, $this>
+     * @return BelongsTo<ProductionOrderModel, $this>
      */
     public function productionOrder(): BelongsTo
     {
-        return $this->belongsTo(ProductionOrder::class);
+        return $this->belongsTo(ProductionOrderModel::class);
     }
 }

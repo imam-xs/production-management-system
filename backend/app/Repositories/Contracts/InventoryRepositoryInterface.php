@@ -4,10 +4,10 @@ namespace App\Repositories\Contracts;
 
 use App\Enums\ItemType;
 use App\Enums\MovementType;
-use App\Models\Batch;
-use App\Models\InventoryMovement;
-use App\Models\Item;
-use App\Models\ItemStock;
+use App\Models\BatchModel;
+use App\Models\InventoryMovementModel;
+use App\Models\ItemModel;
+use App\Models\ItemStockModel;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -15,29 +15,29 @@ use Illuminate\Database\Eloquent\Model;
 interface InventoryRepositoryInterface
 {
     /**
-     * @return Collection<int, Item>
+     * @return Collection<int, ItemModel>
      */
     public function stockLevels(?ItemType $type = null): Collection;
 
-    public function stockFor(Item $item): ItemStock;
+    public function stockFor(ItemModel $item): ItemStockModel;
 
     // locked for update
-    public function lockStockFor(Item $item): ItemStock;
+    public function lockStockFor(ItemModel $item): ItemStockModel;
 
-    public function adjustStock(ItemStock $stock, string $signedQuantity): string;
+    public function adjustStock(ItemStockModel $stock, string $signedQuantity): string;
 
     public function recordMovement(
-        Item $item,
-        ?Batch $batch,
+        ItemModel $item,
+        ?BatchModel $batch,
         MovementType $type,
         string $signedQuantity,
         string $balanceAfter,
         ?Model $reference = null,
         ?string $note = null,
-    ): InventoryMovement;
+    ): InventoryMovementModel;
 
     /**
-     * @return LengthAwarePaginator<int, InventoryMovement>
+     * @return LengthAwarePaginator<int, InventoryMovementModel>
      */
-    public function paginateMovements(Item $item, int $perPage = 15): LengthAwarePaginator;
+    public function paginateMovements(ItemModel $item, int $perPage = 15): LengthAwarePaginator;
 }

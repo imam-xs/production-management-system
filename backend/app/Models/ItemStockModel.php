@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $item_id
  * @property string $quantity_on_hand
  */
-class ItemStock extends Model
+class ItemStockModel extends Model
 {
     protected $table = 'item_stocks';
 
@@ -46,10 +46,10 @@ class ItemStock extends Model
     }
 
     /**
-     * @return BelongsTo<Item, $this>
+     * @return BelongsTo<ItemModel, $this>
      */
     public function item(): BelongsTo
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(ItemModel::class);
     }
 }
