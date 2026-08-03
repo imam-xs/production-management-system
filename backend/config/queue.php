@@ -35,6 +35,43 @@ return [
             'driver' => 'sync',
         ],
 
+        /*
+         * Production events. The topology is declared here rather than left to
+         * the driver's defaults so the broker still shows a topic exchange, a
+         * binding pattern and a dead-letter queue — the same shape the hand
+         * -rolled consumer used, and what makes the async path inspectable in
+         * the RabbitMQ console.
+         */
+        'rabbitmq' => [
+            'driver' => 'rabbitmq',
+            'queue' => env('RABBITMQ_QUEUE', 'production.events.processing'),
+            'hosts' => [
+                [
+                    'host' => env('RABBITMQ_HOST', 'rabbitmq'),
+                    'port' => (int) env('RABBITMQ_PORT', 5672),
+                    'user' => env('RABBITMQ_USER', 'guest'),
+                    'password' => env('RABBITMQ_PASSWORD', 'guest'),
+                    'vhost' => env('RABBITMQ_VHOST', '/'),
+                ],
+            ],
+            'options' => [
+                'queue' => [
+                    'exchange' => env('RABBITMQ_EXCHANGE', 'production.events'),
+                    'exchange_type' => 'topic',
+
+                    // sprintf format — %s is the queue name, so the queue is
+                    // bound to the exchange under its own name.
+                    'exchange_routing_key' => '%s',
+
+                    // Rejected messages land in the DLQ instead of being lost.
+                    'reroute_failed' => true,
+                    'failed_exchange' => env('RABBITMQ_DLX', 'production.events.dlx'),
+                    'failed_routing_key' => 'production.failed',
+                ],
+            ],
+            'after_commit' => true,
+        ],
+
         'database' => [
             'driver' => 'database',
             'connection' => env('DB_QUEUE_CONNECTION'),

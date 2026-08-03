@@ -14,6 +14,13 @@ set -euo pipefail
 APP_ROLE="${APP_ROLE:-app}"
 READY_MARKER="storage/app/.pms-ready"
 
+# Topology names. Defaulted here because compose only passes the connection
+# details, and `set -u` would abort on an unset variable below.
+RABBITMQ_EXCHANGE="${RABBITMQ_EXCHANGE:-production.events}"
+RABBITMQ_QUEUE="${RABBITMQ_QUEUE:-production.events.processing}"
+RABBITMQ_DLX="${RABBITMQ_DLX:-production.events.dlx}"
+RABBITMQ_DLQ="${RABBITMQ_DLQ:-production.events.dlq}"
+
 log() { printf '\033[0;36m[entrypoint:%s]\033[0m %s\n' "$APP_ROLE" "$1"; }
 
 wait_for_mysql() {
@@ -66,8 +73,30 @@ prepare_application() {
     php artisan config:clear
     php artisan route:clear
 
+    declare_rabbitmq_topology
+
     touch "$READY_MARKER"
     log "application ready"
+}
+
+# The queue driver declares the exchange on first publish but deliberately
+# leaves the queue and its bindings alone whenever an exchange is configured
+# (see RabbitMQQueue::declareDestination). Declaring them here keeps a fresh
+# `docker compose up` reproducible: topic exchange, one bound work queue, and a
+# dead-letter queue for messages the worker gives up on.
+declare_rabbitmq_topology() {
+    wait_for_rabbitmq
+
+    log "declaring rabbitmq topology"
+
+    php artisan rabbitmq:exchange-declare "$RABBITMQ_EXCHANGE" rabbitmq --type=topic --durable=1 --silent || true
+    php artisan rabbitmq:exchange-declare "$RABBITMQ_DLX" rabbitmq --type=topic --durable=1 --silent || true
+
+    php artisan rabbitmq:queue-declare "$RABBITMQ_DLQ" rabbitmq --durable=1 --silent || true
+    php artisan rabbitmq:queue-bind "$RABBITMQ_DLQ" "$RABBITMQ_DLX" rabbitmq --routing-key="production.failed" --silent || true
+
+    php artisan rabbitmq:queue-declare "$RABBITMQ_QUEUE" rabbitmq --durable=1 --silent || true
+    php artisan rabbitmq:queue-bind "$RABBITMQ_QUEUE" "$RABBITMQ_EXCHANGE" rabbitmq --routing-key="$RABBITMQ_QUEUE" --silent || true
 }
 
 wait_for_application() {
