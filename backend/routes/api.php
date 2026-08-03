@@ -11,61 +11,78 @@ use App\Http\Controllers\Api\V1\RecipeController;
 use App\Http\Controllers\Api\V1\SemiFinishedProductController;
 use Illuminate\Support\Facades\Route;
 
+/*
+| Explicit routes, not Route::apiResource(): a plain (non-model) route
+| parameter binds to a controller argument by NAME, and apiResource would
+| generate `raw_material` where the controller expects `$rawMaterial`. Writing
+| them out also leaves room for the non-CRUD actions (execute, trace, receipts).
+*/
+
 Route::prefix('v1')->name('v1.')->group(function (): void {
 
     Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');
 
     Route::middleware('auth:sanctum')->group(function (): void {
-        Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
-        Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
 
-        // Raw materials
-        Route::get('raw-materials', [RawMaterialController::class, 'index'])->name('raw-materials.index');
-        Route::post('raw-materials', [RawMaterialController::class, 'store'])->name('raw-materials.store');
-        Route::get('raw-materials/{rawMaterial}', [RawMaterialController::class, 'show'])->name('raw-materials.show');
-        Route::put('raw-materials/{rawMaterial}', [RawMaterialController::class, 'update'])->name('raw-materials.update');
-        Route::patch('raw-materials/{rawMaterial}', [RawMaterialController::class, 'update']);
-        Route::delete('raw-materials/{rawMaterial}', [RawMaterialController::class, 'destroy'])->name('raw-materials.destroy');
+        Route::prefix('auth')->name('auth.')->group(function (): void {
+            Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+            Route::get('me', [AuthController::class, 'me'])->name('me');
+        });
 
-        // Semi-finished products
-        Route::get('semi-finished-products', [SemiFinishedProductController::class, 'index'])->name('semi-finished-products.index');
-        Route::post('semi-finished-products', [SemiFinishedProductController::class, 'store'])->name('semi-finished-products.store');
-        Route::get('semi-finished-products/{semiFinishedProduct}', [SemiFinishedProductController::class, 'show'])->name('semi-finished-products.show');
-        Route::put('semi-finished-products/{semiFinishedProduct}', [SemiFinishedProductController::class, 'update'])->name('semi-finished-products.update');
-        Route::patch('semi-finished-products/{semiFinishedProduct}', [SemiFinishedProductController::class, 'update']);
-        Route::delete('semi-finished-products/{semiFinishedProduct}', [SemiFinishedProductController::class, 'destroy'])->name('semi-finished-products.destroy');
+        // The three item resources are the same six routes with a different
+        // controller — the placeholder is spelled like the controller argument.
+        Route::prefix('raw-materials')->name('raw-materials.')->group(function (): void {
+            Route::get('/', [RawMaterialController::class, 'index'])->name('index');
+            Route::post('/', [RawMaterialController::class, 'store'])->name('store');
+            Route::get('{rawMaterial}', [RawMaterialController::class, 'show'])->name('show');
+            Route::match(['put', 'patch'], '{rawMaterial}', [RawMaterialController::class, 'update'])->name('update');
+            Route::delete('{rawMaterial}', [RawMaterialController::class, 'destroy'])->name('destroy');
+        });
 
-        // Finished products
-        Route::get('finished-products', [FinishedProductController::class, 'index'])->name('finished-products.index');
-        Route::post('finished-products', [FinishedProductController::class, 'store'])->name('finished-products.store');
-        Route::get('finished-products/{finishedProduct}', [FinishedProductController::class, 'show'])->name('finished-products.show');
-        Route::put('finished-products/{finishedProduct}', [FinishedProductController::class, 'update'])->name('finished-products.update');
-        Route::patch('finished-products/{finishedProduct}', [FinishedProductController::class, 'update']);
-        Route::delete('finished-products/{finishedProduct}', [FinishedProductController::class, 'destroy'])->name('finished-products.destroy');
+        Route::prefix('semi-finished-products')->name('semi-finished-products.')->group(function (): void {
+            Route::get('/', [SemiFinishedProductController::class, 'index'])->name('index');
+            Route::post('/', [SemiFinishedProductController::class, 'store'])->name('store');
+            Route::get('{semiFinishedProduct}', [SemiFinishedProductController::class, 'show'])->name('show');
+            Route::match(['put', 'patch'], '{semiFinishedProduct}', [SemiFinishedProductController::class, 'update'])->name('update');
+            Route::delete('{semiFinishedProduct}', [SemiFinishedProductController::class, 'destroy'])->name('destroy');
+        });
 
-        // Inventory
-        Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
-        Route::get('inventory/stage/{stage}', [InventoryController::class, 'byStage'])->name('inventory.by-stage');
-        Route::post('inventory/receipts', [InventoryController::class, 'receive'])->name('inventory.receipts');
-        Route::get('items/{item}/movements', [InventoryController::class, 'movements'])->name('items.movements');
+        Route::prefix('finished-products')->name('finished-products.')->group(function (): void {
+            Route::get('/', [FinishedProductController::class, 'index'])->name('index');
+            Route::post('/', [FinishedProductController::class, 'store'])->name('store');
+            Route::get('{finishedProduct}', [FinishedProductController::class, 'show'])->name('show');
+            Route::match(['put', 'patch'], '{finishedProduct}', [FinishedProductController::class, 'update'])->name('update');
+            Route::delete('{finishedProduct}', [FinishedProductController::class, 'destroy'])->name('destroy');
+        });
 
-        // Recipe (bill of materials) — read-only; see RecipeController for why.
-        Route::get('items/{item}/recipe', [RecipeController::class, 'show'])->name('items.recipe');
+        Route::prefix('inventory')->name('inventory.')->group(function (): void {
+            Route::get('/', [InventoryController::class, 'index'])->name('index');
+            Route::get('low-stock', [InventoryController::class, 'lowStock'])->name('low-stock');
+            Route::get('stage/{stage}', [InventoryController::class, 'byStage'])->name('by-stage');
+            Route::post('receipts', [InventoryController::class, 'receive'])->name('receipts');
+        });
 
-        // Production orders
-        Route::get('production-orders', [ProductionOrderController::class, 'index'])->name('production-orders.index');
-        Route::post('production-orders', [ProductionOrderController::class, 'store'])->name('production-orders.store');
-        Route::get('production-orders/{productionOrder}', [ProductionOrderController::class, 'show'])->name('production-orders.show');
-        Route::post('production-orders/{productionOrder}/execute', [ProductionOrderController::class, 'execute'])->name('production-orders.execute');
+        // Both hang off a single item; the recipe is read-only — see RecipeController.
+        Route::prefix('items/{item}')->name('items.')->group(function (): void {
+            Route::get('movements', [InventoryController::class, 'movements'])->name('movements');
+            Route::get('recipe', [RecipeController::class, 'show'])->name('recipe');
+        });
 
-        // Production events recorded by the RabbitMQ consumer
+        Route::prefix('production-orders')->name('production-orders.')->group(function (): void {
+            Route::get('/', [ProductionOrderController::class, 'index'])->name('index');
+            Route::post('/', [ProductionOrderController::class, 'store'])->name('store');
+            Route::get('{productionOrder}', [ProductionOrderController::class, 'show'])->name('show');
+            Route::post('{productionOrder}/execute', [ProductionOrderController::class, 'execute'])->name('execute');
+        });
+
+        // Written by the queue worker, exposed so the async path is observable.
         Route::get('production-events', [ProductionEventController::class, 'index'])->name('production-events.index');
 
-        // Batches & traceability
-        Route::get('batches', [BatchController::class, 'index'])->name('batches.index');
-        Route::get('batches/{batch}', [BatchController::class, 'show'])->name('batches.show');
-        Route::get('batches/{batch}/trace', [BatchController::class, 'trace'])->name('batches.trace');
-        Route::get('batches/{batch}/trace-downstream', [BatchController::class, 'traceDownstream'])->name('batches.trace-downstream');
+        Route::prefix('batches')->name('batches.')->group(function (): void {
+            Route::get('/', [BatchController::class, 'index'])->name('index');
+            Route::get('{batch}', [BatchController::class, 'show'])->name('show');
+            Route::get('{batch}/trace', [BatchController::class, 'trace'])->name('trace');
+            Route::get('{batch}/trace-downstream', [BatchController::class, 'traceDownstream'])->name('trace-downstream');
+        });
     });
 });
