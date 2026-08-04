@@ -1,17 +1,11 @@
-# ---------------------------------------------------------------------------
-# Shared image for both roles of the backend:
 #
-#   APP_ROLE=app     — Apache + mod_php serving the REST API
-#   APP_ROLE=worker  — the RabbitMQ consumer (same code, same extensions)
+# One image for both the API and the queue worker. Apache serves PHP directly,
+# so there is no separate web server container to keep in sync.
 #
-# Apache serves HTTP directly, so there is no separate web-server container and
-# no vhost file to keep in sync — the document root and PHP overrides are
-# written inline below.
-# ---------------------------------------------------------------------------
 FROM php:8.3-apache
 
-# default-mysql-client — readiness probe (mysqladmin ping) and debugging
-# curl                 — container healthcheck against /up
+# bcmath for exact decimal quantities, sockets for php-amqplib, pcntl for a
+# clean consumer shutdown. mysql-client and curl are for the readiness probes.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         unzip \
@@ -27,14 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get purge -y --auto-remove \
     && rm -rf /var/lib/apt/lists/*
 
-# pdo_mysql — database driver
-# bcmath    — exact decimal arithmetic for inventory quantities
-# sockets   — required by php-amqplib
-# pcntl     — signal handling for graceful consumer shutdown
-# opcache   — bytecode cache
-
-# PHP overrides. default_socket_timeout is raised above the AMQP heartbeat so a
-# quiet consumer connection is not torn down mid-wait.
+# default_socket_timeout sits above the AMQP heartbeat, otherwise a quiet
+# consumer connection gets torn down while it waits.
 RUN { \
         echo 'memory_limit = 512M'; \
         echo 'max_execution_time = 60'; \
@@ -48,7 +36,7 @@ RUN { \
         echo 'opcache.revalidate_freq = 0'; \
     } > /usr/local/etc/php/conf.d/99-pms.ini
 
-# Laravel serves from public/; AllowOverride lets its shipped .htaccess apply.
+# Laravel serves from public/. AllowOverride lets its .htaccess do the routing.
 RUN { \
         echo 'ServerName localhost'; \
         echo '<VirtualHost *:80>'; \
@@ -69,9 +57,7 @@ RUN chmod +x /usr/local/bin/entrypoint
 
 WORKDIR /var/www/html
 
-# Application code is bind-mounted by docker-compose so edits are live and the
-# first boot can install dependencies straight into the mount.
-
+# The code itself is bind-mounted by compose, so edits are live.
 EXPOSE 80
 
 ENTRYPOINT ["entrypoint"]
