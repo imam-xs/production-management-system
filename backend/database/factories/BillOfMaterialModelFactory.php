@@ -19,8 +19,8 @@ class BillOfMaterialModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'output_item_id' => ItemModel::factory()->semiFinished(),
-            'input_item_id' => ItemModel::factory()->rawMaterial(),
+            'output_item_id'    => ItemModel::factory()->semiFinished(),
+            'input_item_id'     => ItemModel::factory()->rawMaterial(),
             'quantity_per_unit' => $this->faker->randomFloat(4, 0.5, 5),
         ];
     }
@@ -28,8 +28,8 @@ class BillOfMaterialModelFactory extends Factory
     public function recipe(ItemModel $output, ItemModel $input, float $quantityPerUnit): self
     {
         return $this->state([
-            'output_item_id' => $output->id,
-            'input_item_id' => $input->id,
+            'output_item_id'    => $output->id,
+            'input_item_id'     => $input->id,
             'quantity_per_unit' => $quantityPerUnit,
         ]);
     }

@@ -23,12 +23,12 @@ class InventoryMovementModelFactory extends Factory
         $quantity = $this->faker->randomFloat(4, 1, 500);
 
         return [
-            'item_id' => ItemModel::factory()->rawMaterial(),
-            'batch_id' => BatchModel::factory(),
-            'type' => MovementType::Receipt,
-            'quantity' => $quantity,
+            'item_id'       => ItemModel::factory()->rawMaterial(),
+            'batch_id'      => BatchModel::factory(),
+            'type'          => MovementType::Receipt,
+            'quantity'      => $quantity,
             'balance_after' => $quantity,
-            'note' => null,
+            'note'          => null,
         ];
     }
 

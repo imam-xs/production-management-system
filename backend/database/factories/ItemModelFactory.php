@@ -20,13 +20,13 @@ class ItemModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'sku' => strtoupper($this->faker->unique()->bothify('ITM-####-??')),
-            'name' => ucwords($this->faker->words(2, true)),
-            'type' => ItemType::Raw,
-            'unit_id' => UnitModel::factory(),
-            'description' => $this->faker->optional()->sentence(),
+            'sku'           => strtoupper($this->faker->unique()->bothify('ITM-####-??')),
+            'name'          => ucwords($this->faker->words(2, true)),
+            'type'          => ItemType::Raw,
+            'unit_id'       => UnitModel::factory(),
+            'description'   => $this->faker->optional()->sentence(),
             'reorder_level' => $this->faker->randomFloat(4, 0, 100),
-            'is_active' => true,
+            'is_active'     => true,
         ];
     }
 

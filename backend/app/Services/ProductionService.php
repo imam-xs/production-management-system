@@ -52,7 +52,7 @@ class ProductionService
         return $this->orders->findByIdOrFail($id);
     }
 
-    // The log the RabbitMQ consumer writes.
+    // the log the RabbitMQ consumer writes
     /** @return LengthAwarePaginator<int, ProductionEventLogModel> */
     public function eventLog(int $perPage = 15): LengthAwarePaginator
     {

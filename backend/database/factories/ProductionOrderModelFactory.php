@@ -21,14 +21,14 @@ class ProductionOrderModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'order_number' => strtoupper($this->faker->unique()->bothify('PO-########-####')),
-            'stage' => ProductionStage::RawToSemiFinished,
-            'output_item_id' => ItemModel::factory()->semiFinished(),
-            'planned_quantity' => $this->faker->randomFloat(4, 10, 100),
+            'order_number'      => strtoupper($this->faker->unique()->bothify('PO-########-####')),
+            'stage'             => ProductionStage::RawToSemiFinished,
+            'output_item_id'    => ItemModel::factory()->semiFinished(),
+            'planned_quantity'  => $this->faker->randomFloat(4, 10, 100),
             'produced_quantity' => 0,
-            'status' => ProductionOrderStatus::Pending,
-            'completed_at' => null,
-            'created_by' => null,
+            'status'            => ProductionOrderStatus::Pending,
+            'completed_at'      => null,
+            'created_by'        => null,
         ];
     }
 
@@ -43,16 +43,16 @@ class ProductionOrderModelFactory extends Factory
     public function completed(): self
     {
         return $this->state(fn (array $attributes): array => [
-            'status' => ProductionOrderStatus::Completed,
+            'status'            => ProductionOrderStatus::Completed,
             'produced_quantity' => $attributes['planned_quantity'],
-            'completed_at' => now(),
+            'completed_at'      => now(),
         ]);
     }
 
     public function failed(string $reason = 'Insufficient input inventory.'): self
     {
         return $this->state([
-            'status' => ProductionOrderStatus::Failed,
+            'status'         => ProductionOrderStatus::Failed,
             'failure_reason' => $reason,
         ]);
     }

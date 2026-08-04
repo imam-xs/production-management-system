@@ -21,8 +21,8 @@ class ProductionConsumptionModelFactory extends Factory
     {
         return [
             'production_order_id' => ProductionOrderModel::factory(),
-            'input_batch_id' => BatchModel::factory(),
-            'quantity_consumed' => $this->faker->randomFloat(4, 1, 50),
+            'input_batch_id'      => BatchModel::factory(),
+            'quantity_consumed'   => $this->faker->randomFloat(4, 1, 50),
         ];
     }
 
@@ -30,8 +30,8 @@ class ProductionConsumptionModelFactory extends Factory
     {
         return $this->state([
             'production_order_id' => $order->id,
-            'input_batch_id' => $inputBatch->id,
-            'quantity_consumed' => $quantity,
+            'input_batch_id'      => $inputBatch->id,
+            'quantity_consumed'   => $quantity,
         ]);
     }
 }

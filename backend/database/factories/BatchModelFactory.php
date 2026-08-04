@@ -23,13 +23,13 @@ class BatchModelFactory extends Factory
         $quantity = $this->faker->randomFloat(4, 10, 1000);
 
         return [
-            'batch_number' => strtoupper($this->faker->unique()->bothify('RM-########-####')),
-            'item_id' => ItemModel::factory()->rawMaterial(),
-            'quantity_produced' => $quantity,
-            'quantity_remaining' => $quantity,
-            'origin' => BatchOrigin::Purchase,
+            'batch_number'        => strtoupper($this->faker->unique()->bothify('RM-########-####')),
+            'item_id'             => ItemModel::factory()->rawMaterial(),
+            'quantity_produced'   => $quantity,
+            'quantity_remaining'  => $quantity,
+            'origin'              => BatchOrigin::Purchase,
             'production_order_id' => null,
-            'produced_at' => $this->faker->dateTimeBetween('-30 days'),
+            'produced_at'         => $this->faker->dateTimeBetween('-30 days'),
         ];
     }
 
@@ -55,9 +55,9 @@ class BatchModelFactory extends Factory
     public function produced(ProductionOrderModel $order): self
     {
         return $this->state([
-            'origin' => BatchOrigin::Production,
+            'origin'              => BatchOrigin::Production,
             'production_order_id' => $order->id,
-            'item_id' => $order->output_item_id,
+            'item_id'             => $order->output_item_id,
         ]);
     }
 }
