@@ -1,0 +1,1063 @@
+{
+  "info": {
+    "name": "Production Management System",
+    "description": "Every endpoint of the PMS API.\n\n## Before you start\n\n1. Bring the stack up: `docker compose up -d`\n2. Run **Auth > Login**. It saves the bearer token into a collection variable, so every other request is authenticated from then on.\n3. Run the requests in **Walkthrough** from top to bottom. Each one saves the ids the next one needs, so you never have to copy an id by hand.\n\nThe base URL defaults to `http://localhost:8001/api/v1`. Change the `base_url` variable if you run it somewhere else.\n\nSeeded login: `admin@pms.test` / `password`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8001/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "admin@pms.test",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "password",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "raw_material_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "semi_finished_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "finished_product_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "batch_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "production_order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "scratch_item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "oversized_order_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Sanctum personal access tokens. No cookies, no session.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const token = pm.response.json().data.token;",
+                  "pm.collectionVariables.set('token', token);",
+                  "",
+                  "pm.test('token saved', () => pm.expect(token).to.be.a('string').and.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Returns a bearer token. The test script stores it in the `token` collection variable, which every other request uses.\n\nWrong credentials return 401."
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "The user behind the current token. Useful to confirm the token is live."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Walkthrough",
+      "description": "The whole flow in eight requests: buy a raw material, turn it into a semi finished product, turn that into a finished product, then trace the finished batch back to the purchase.\n\nRun them in order. Each request saves what the next one needs.",
+      "item": [
+        {
+          "name": "1. Pick a raw material",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const first = pm.response.json().data[0];",
+                  "pm.collectionVariables.set('raw_material_id', first.id);",
+                  "console.log('Raw material:', first.sku, first.name);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/raw-materials",
+              "host": ["{{base_url}}"],
+              "path": ["raw-materials"]
+            },
+            "description": "Grabs the first seeded raw material and remembers its id."
+          }
+        },
+        {
+          "name": "2. Receive stock",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "",
+                  "const batch = pm.response.json().data;",
+                  "pm.collectionVariables.set('batch_id', batch.id);",
+                  "",
+                  "pm.test('origin is purchase', () => pm.expect(batch.origin).to.eql('purchase'));",
+                  "console.log('Purchase batch:', batch.batch_number);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_id\": {{raw_material_id}},\n  \"quantity\": \"500\",\n  \"note\": \"Postman walkthrough\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/inventory/receipts",
+              "host": ["{{base_url}}"],
+              "path": ["inventory", "receipts"]
+            },
+            "description": "The only way raw material stock goes up. Creates a purchase batch with its own batch number, and writes an inventory movement.\n\nOnly raw materials are accepted here. Send a semi finished item id and you get 422."
+          }
+        },
+        {
+          "name": "3. Pick a semi finished product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const first = pm.response.json().data[0];",
+                  "pm.collectionVariables.set('semi_finished_id', first.id);",
+                  "console.log('Semi finished:', first.sku, first.name);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/semi-finished-products",
+              "host": ["{{base_url}}"],
+              "path": ["semi-finished-products"]
+            }
+          }
+        },
+        {
+          "name": "4. Create a production order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "",
+                  "const order = pm.response.json().data;",
+                  "pm.collectionVariables.set('production_order_id', order.id);",
+                  "",
+                  "pm.test('starts pending', () => pm.expect(order.status).to.eql('pending'));",
+                  "console.log('Order:', order.order_number, '| stage:', order.stage);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"output_item_id\": {{semi_finished_id}},\n  \"planned_quantity\": \"20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/production-orders",
+              "host": ["{{base_url}}"],
+              "path": ["production-orders"]
+            },
+            "description": "You only say what to make and how much. The stage is worked out from the output item's type, and the order number is generated.\n\nNothing moves in inventory yet. The order is just pending."
+          }
+        },
+        {
+          "name": "5. Execute it",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const order = pm.response.json().data;",
+                  "",
+                  "pm.test('completed', () => pm.expect(order.status).to.eql('completed'));",
+                  "pm.test('produced a batch', () => pm.expect(order.output_batch).to.not.be.null);",
+                  "",
+                  "if (order.output_batch) {",
+                  "    pm.collectionVariables.set('batch_id', order.output_batch.id);",
+                  "    console.log('Output batch:', order.output_batch.batch_number);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/production-orders/{{production_order_id}}/execute",
+              "host": ["{{base_url}}"],
+              "path": ["production-orders", "{{production_order_id}}", "execute"]
+            },
+            "description": "The heart of the system. In one transaction it locks the input batches, allocates them oldest first, consumes them, and creates the output batch with links back to every input.\n\nIf stock is short, nothing happens at all and you get 422 with the shortfall spelled out.\n\nRunning it twice returns 409. The order is no longer pending.\n\nThe event that this fires is published to RabbitMQ after the transaction commits, so the response does not wait for it."
+          }
+        },
+        {
+          "name": "6. Trace the batch back",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const tree = pm.response.json().data;",
+                  "pm.test('has consumed inputs', () => pm.expect(tree.consumed).to.be.an('array').that.is.not.empty);",
+                  "",
+                  "console.log(JSON.stringify(tree, null, 2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/batches/{{batch_id}}/trace",
+              "host": ["{{base_url}}"],
+              "path": ["batches", "{{batch_id}}", "trace"]
+            },
+            "description": "Walks up the tree: this batch, what it was made from, what those were made from, all the way to the purchase batches at the bottom.\n\nThis is the recall question answered in one call: where did this product come from?"
+          }
+        },
+        {
+          "name": "7. Trace forward",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/batches/{{batch_id}}/trace-downstream",
+              "host": ["{{base_url}}"],
+              "path": ["batches", "{{batch_id}}", "trace-downstream"]
+            },
+            "description": "The other direction: everything made out of this batch.\n\nAsk it on a raw material batch and you see every finished product it ended up in. That is the answer to a supplier recall."
+          }
+        },
+        {
+          "name": "8. Check the event log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const events = pm.response.json().data;",
+                  "pm.test('the worker has written something', () => pm.expect(events).to.not.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/production-events?per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["production-events"],
+              "query": [{ "key": "per_page", "value": "10" }]
+            },
+            "description": "Rows here are written by the RabbitMQ worker, never by an HTTP request. If your order shows up in this list, the async path really ran.\n\nGive it a second after executing. If the worker is stopped, this stays empty and the message waits in the queue."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Raw materials",
+      "item": [
+        {
+          "name": "List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/raw-materials?search=&is_active=&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["raw-materials"],
+              "query": [
+                { "key": "search", "value": "", "description": "matches sku or name" },
+                { "key": "is_active", "value": "", "description": "true or false" },
+                { "key": "per_page", "value": "15", "description": "1 to 100" }
+              ]
+            },
+            "description": "Every row carries its current quantity on hand and an `is_low_stock` flag, so the list view needs no second call."
+          }
+        },
+        {
+          "name": "Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('scratch_item_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"RAW-COPPER-WIRE-{{$timestamp}}\",\n  \"name\": \"Copper Wire\",\n  \"unit_id\": 1,\n  \"description\": \"2mm industrial copper wire\",\n  \"reorder_level\": \"100\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/raw-materials",
+              "host": ["{{base_url}}"],
+              "path": ["raw-materials"]
+            },
+            "description": "`sku` has to be unique, so the body appends a timestamp. Drop the timestamp, send the same sku twice, and the second one gets 422.\n\nShow, Update, and Delete below all act on whatever this created."
+          }
+        },
+        {
+          "name": "Show",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/raw-materials/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["raw-materials", "{{scratch_item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reorder_level\": \"150\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/raw-materials/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["raw-materials", "{{scratch_item_id}}"]
+            },
+            "description": "PATCH updates only what you send. PUT works too and expects the whole object."
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/raw-materials/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["raw-materials", "{{scratch_item_id}}"]
+            },
+            "description": "Soft delete, and only if the item has no batches and appears in no recipe. Otherwise 409, because deleting it would break the trace history.\n\nTry it on a seeded item id instead and you will see the 409."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Semi finished products",
+      "item": [
+        {
+          "name": "List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/semi-finished-products?search=&is_active=&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["semi-finished-products"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "is_active", "value": "" },
+                { "key": "per_page", "value": "15" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('scratch_item_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"SEMI-COPPER-COIL-{{$timestamp}}\",\n  \"name\": \"Copper Coil\",\n  \"unit_id\": 2,\n  \"reorder_level\": \"20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/semi-finished-products",
+              "host": ["{{base_url}}"],
+              "path": ["semi-finished-products"]
+            },
+            "description": "A new semi finished item has no recipe yet, so you cannot produce it until you give it one. The seeded items already have theirs."
+          }
+        },
+        {
+          "name": "Show",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/semi-finished-products/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["semi-finished-products", "{{scratch_item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Copper Coil (revised)\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/semi-finished-products/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["semi-finished-products", "{{scratch_item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/semi-finished-products/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["semi-finished-products", "{{scratch_item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Recipe",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/items/{{semi_finished_id}}/recipe",
+              "host": ["{{base_url}}"],
+              "path": ["items", "{{semi_finished_id}}", "recipe"]
+            },
+            "description": "The bill of materials: what goes into one unit of this item, and how much. This is what the execute call reads to work out how much to consume."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Finished products",
+      "item": [
+        {
+          "name": "List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const first = pm.response.json().data[0];",
+                  "if (first) { pm.collectionVariables.set('finished_product_id', first.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/finished-products?search=&is_active=&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["finished-products"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "is_active", "value": "" },
+                { "key": "per_page", "value": "15" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('scratch_item_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"FIN-MOTOR-UNIT-{{$timestamp}}\",\n  \"name\": \"Motor Unit\",\n  \"unit_id\": 2,\n  \"reorder_level\": \"10\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/finished-products",
+              "host": ["{{base_url}}"],
+              "path": ["finished-products"]
+            }
+          }
+        },
+        {
+          "name": "Show",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/finished-products/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["finished-products", "{{scratch_item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/finished-products/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["finished-products", "{{scratch_item_id}}"]
+            },
+            "description": "Deactivating hides an item from new production orders. It does not touch the batches already made from it, so the trace history stays intact."
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/finished-products/{{scratch_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["finished-products", "{{scratch_item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Recipe",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/items/{{finished_product_id}}/recipe",
+              "host": ["{{base_url}}"],
+              "path": ["items", "{{finished_product_id}}", "recipe"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "All stock",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/inventory",
+              "host": ["{{base_url}}"],
+              "path": ["inventory"]
+            },
+            "description": "Every item across all three stages, with quantity on hand. Items that have never moved show zero rather than going missing."
+          }
+        },
+        {
+          "name": "Stock by stage",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/inventory/stage/raw",
+              "host": ["{{base_url}}"],
+              "path": ["inventory", "stage", "raw"],
+              "variable": []
+            },
+            "description": "Swap the last path segment for `raw`, `semi_finished`, or `finished`. Anything else returns 404."
+          }
+        },
+        {
+          "name": "Low stock",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/inventory/low-stock?type=",
+              "host": ["{{base_url}}"],
+              "path": ["inventory", "low-stock"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "optional: raw, semi_finished, finished"
+                }
+              ]
+            },
+            "description": "Items at or below their reorder level. This feeds the dashboard alert panel."
+          }
+        },
+        {
+          "name": "Receive stock",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('batch_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_id\": {{raw_material_id}},\n  \"quantity\": \"250\",\n  \"produced_at\": \"2026-08-01T09:00:00Z\",\n  \"note\": \"Delivery from supplier\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/inventory/receipts",
+              "host": ["{{base_url}}"],
+              "path": ["inventory", "receipts"]
+            },
+            "description": "Raw materials only. `produced_at` is optional and sets the batch date, which decides the FIFO order when the batch is later consumed."
+          }
+        },
+        {
+          "name": "Item movements",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/items/{{raw_material_id}}/movements",
+              "host": ["{{base_url}}"],
+              "path": ["items", "{{raw_material_id}}", "movements"]
+            },
+            "description": "The full ledger for one item. Every increase and decrease, with what caused it. Add up the quantities and you get the current stock, which is the audit trail behind the number."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Production orders",
+      "item": [
+        {
+          "name": "List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/production-orders?stage=&status=&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["production-orders"],
+              "query": [
+                {
+                  "key": "stage",
+                  "value": "",
+                  "description": "raw_to_semi_finished or semi_finished_to_finished"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "pending, completed, failed, cancelled"
+                },
+                { "key": "per_page", "value": "15" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('production_order_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"output_item_id\": {{semi_finished_id}},\n  \"planned_quantity\": \"20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/production-orders",
+              "host": ["{{base_url}}"],
+              "path": ["production-orders"]
+            },
+            "description": "The stage comes from the output item's type, so you never send it. Ask for a raw material as output and you get 422, because raw materials are bought, not made."
+          }
+        },
+        {
+          "name": "Show",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/production-orders/{{production_order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["production-orders", "{{production_order_id}}"]
+            },
+            "description": "Includes the output batch and the input batches it consumed, once the order has run."
+          }
+        },
+        {
+          "name": "Execute",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/production-orders/{{production_order_id}}/execute",
+              "host": ["{{base_url}}"],
+              "path": ["production-orders", "{{production_order_id}}", "execute"]
+            },
+            "description": "Locks, allocates FIFO, consumes, produces, all in one transaction.\n\n- 200: done, with the new batch\n- 422: not enough stock, with the exact shortfall, and nothing was changed\n- 409: the order was not pending, so it already ran"
+          }
+        },
+        {
+          "name": "Execute (not enough stock)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// create a deliberately impossible order so this request always",
+                  "// demonstrates the rejection path, never a stale 409",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('base_url') + '/production-orders',",
+                  "    method: 'POST',",
+                  "    header: {",
+                  "        'Accept': 'application/json',",
+                  "        'Content-Type': 'application/json',",
+                  "        'Authorization': 'Bearer ' + pm.collectionVariables.get('token'),",
+                  "    },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({",
+                  "            output_item_id: pm.collectionVariables.get('semi_finished_id'),",
+                  "            planned_quantity: '999999',",
+                  "        }),",
+                  "    },",
+                  "}, (err, res) => {",
+                  "    pm.collectionVariables.set('oversized_order_id', res.json().data.id);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 rejected', () => pm.response.to.have.status(422));",
+                  "pm.test('says what is missing', () => pm.expect(pm.response.json().message).to.include('short by'));",
+                  "",
+                  "console.log(pm.response.json().message);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/production-orders/{{oversized_order_id}}/execute",
+              "host": ["{{base_url}}"],
+              "path": ["production-orders", "{{oversized_order_id}}", "execute"]
+            },
+            "description": "The failure path. A script before this request creates an order for 999999 units, which no stock can cover.\n\nThe message names the item, what was needed, what was there, and how much was missing. Check inventory afterwards and nothing moved. The whole transaction rolled back, so there is no half consumed batch to clean up."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Batches and traceability",
+      "item": [
+        {
+          "name": "List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const first = pm.response.json().data[0];",
+                  "if (first) { pm.collectionVariables.set('batch_id', first.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/batches?search=&item_type=&origin=&available_only=&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["batches"],
+              "query": [
+                { "key": "search", "value": "", "description": "batch number, sku, or item name" },
+                { "key": "item_type", "value": "", "description": "raw, semi_finished, finished" },
+                { "key": "origin", "value": "", "description": "purchase or production" },
+                { "key": "available_only", "value": "", "description": "true hides used up batches" },
+                { "key": "per_page", "value": "15" }
+              ]
+            },
+            "description": "One table for all three stages. `origin` tells you whether a batch was bought or made."
+          }
+        },
+        {
+          "name": "Show",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/batches/{{batch_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["batches", "{{batch_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Trace upstream",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/batches/{{batch_id}}/trace",
+              "host": ["{{base_url}}"],
+              "path": ["batches", "{{batch_id}}", "trace"]
+            },
+            "description": "Where did this come from? Returns the whole tree down to the purchase batches, with the quantity taken at every step."
+          }
+        },
+        {
+          "name": "Trace downstream",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/batches/{{batch_id}}/trace-downstream",
+              "host": ["{{base_url}}"],
+              "path": ["batches", "{{batch_id}}", "trace-downstream"]
+            },
+            "description": "Where did this go? Point it at a bad raw material batch and you get every finished product affected."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Production events",
+      "item": [
+        {
+          "name": "Event log",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/production-events?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["production-events"],
+              "query": [{ "key": "per_page", "value": "15", "description": "1 to 100" }]
+            },
+            "description": "Read only. Every row was written by the RabbitMQ worker, not by a web request.\n\nTo prove the pipeline is really asynchronous: stop the worker with `docker compose stop worker`, execute an order, and watch it succeed while this list stays unchanged and the queue at http://localhost:15672 holds one message. Start the worker again and the row appears."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.collectionVariables.set('token', '');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "{{base_url}}/auth/logout",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "logout"]
+        },
+        "description": "Deletes the token that made this call. Other tokens for the same user keep working.\n\nIt sits at the bottom on purpose. Run it earlier and everything below it gets 401."
+      }
+    }
+  ]
+}
