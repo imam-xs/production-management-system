@@ -194,81 +194,568 @@ Shapes the JSON that goes back.
 
 ## API reference
 
-Everything lives under `/api/v1`. Every route except login needs
-`Authorization: Bearer <token>`.
+Base URL: `http://localhost:8001/api/v1`
+
+Every route except login needs a header:
+
+```
+Authorization: Bearer <token>
+Accept: application/json
+```
+
+Every response is JSON wrapped in `data`. List endpoints that can grow add
+`links` and `meta` for pagination:
+
+```json
+{
+  "data": [ "..." ],
+  "links": { "first": "...", "last": "...", "prev": null, "next": null },
+  "meta": { "current_page": 1, "per_page": 15, "total": 7, "last_page": 1 }
+}
+```
+
+Quantities are always strings, never numbers. The reason is in
+[Quantities are strings](#quantities-are-strings).
+
+---
 
 ### Auth
 
-| Method | Path | |
+#### POST `/auth/login`
+
+The only public route.
+
+| Field | Type | |
 |---|---|---|
-| POST | `/auth/login` | returns a token |
-| POST | `/auth/logout` | revokes it |
-| GET | `/auth/me` | current user |
+| `email` | string | required |
+| `password` | string | required |
+
+```json
+{ "email": "admin@pms.test", "password": "password" }
+```
+
+**200**
+
+```json
+{
+  "data": {
+    "token": "2|ralY0PcpGGiD5qPXKhqdW7h81esPgVVC8wxfoTzk573d0428",
+    "token_type": "Bearer",
+    "user": { "id": 1, "name": "Plant Administrator", "email": "admin@pms.test" }
+  }
+}
+```
+
+Wrong credentials give **401**. Send that token as `Authorization: Bearer ...`
+on every other call.
+
+#### GET `/auth/me`
+
+**200**
+
+```json
+{ "data": { "id": 1, "name": "Plant Administrator", "email": "admin@pms.test" } }
+```
+
+#### POST `/auth/logout`
+
+Revokes the token that made the call. Other tokens for the same user keep
+working.
+
+**200**
+
+```json
+{ "message": "Logged out." }
+```
+
+---
 
 ### Products
 
-The same five routes exist for `raw-materials`, `semi-finished-products` and
-`finished-products`.
+Three item types, one shape. Everything below works the same for all three:
 
-| Method | Path | |
+| Type | Prefix |
+|---|---|
+| Raw material | `/raw-materials` |
+| Semi finished | `/semi-finished-products` |
+| Finished | `/finished-products` |
+
+The examples use `/raw-materials`.
+
+#### GET `/raw-materials`
+
+| Query | Type | |
 |---|---|---|
-| GET | `/raw-materials` | `?search=` `?is_active=` `?per_page=` |
-| POST | `/raw-materials` | 201 |
-| GET | `/raw-materials/{id}` | |
-| PUT/PATCH | `/raw-materials/{id}` | partial update, send only what changes |
-| DELETE | `/raw-materials/{id}` | 204, or 409 if anything still uses it |
+| `search` | string | matches sku or name |
+| `is_active` | boolean | |
+| `per_page` | integer | 1 to 100, default 15 |
+
+**200**, paginated
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "sku": "RAW-STEEL-SHEET",
+      "name": "Cold Rolled Steel Sheet",
+      "type": "raw",
+      "unit": { "id": 1, "code": "kg", "name": "Kilogram" },
+      "description": null,
+      "reorder_level": "500.0000",
+      "quantity_on_hand": "1385.0000",
+      "is_low_stock": false,
+      "is_active": true,
+      "can_delete": false,
+      "created_at": "2026-08-04T19:02:08+00:00",
+      "updated_at": "2026-08-04T19:02:08+00:00"
+    }
+  ],
+  "links": { "first": "...", "last": "...", "prev": null, "next": null },
+  "meta": { "current_page": 1, "per_page": 15, "total": 3, "last_page": 1 }
+}
+```
+
+Each row already carries its stock and a low stock flag, so a list screen needs
+no second call. `can_delete` is a hint for the UI, and the server checks it
+again anyway.
+
+#### POST `/raw-materials`
+
+| Field | Type | |
+|---|---|---|
+| `sku` | string | required, unique, max 64 |
+| `name` | string | required, max 255 |
+| `unit_id` | integer | required, must exist |
+| `description` | string | optional |
+| `reorder_level` | numeric | optional, min 0 |
+| `is_active` | boolean | optional, defaults to true |
+
+```json
+{ "sku": "RAW-NICKEL-INGOT", "name": "Nickel Ingot", "unit_id": 1, "reorder_level": "50" }
+```
+
+**201** returns the same shape as a list row, with `quantity_on_hand` at
+`"0.0000"`.
+
+A duplicate sku gives **422**:
+
+```json
+{
+  "message": "The sku has already been taken.",
+  "errors": { "sku": ["The sku has already been taken."] }
+}
+```
+
+#### GET `/raw-materials/{id}`
+
+**200**, one row in the shape above. Unknown id gives **404**.
+
+#### PUT or PATCH `/raw-materials/{id}`
+
+Same fields as create, all optional. PATCH updates only what you send.
+
+```json
+{ "reorder_level": "150" }
+```
+
+**200** returns the updated row.
+
+#### DELETE `/raw-materials/{id}`
+
+Soft delete. **204** with an empty body.
+
+Refused with **409** when the item still has stock, batches, or appears in a
+recipe, because removing it would break the trace history:
+
+```json
+{
+  "message": "Cannot delete Cold Rolled Steel Sheet (RAW-STEEL-SHEET) while it still has inventory on hand."
+}
+```
+
+#### GET `/items/{id}/recipe`
+
+The bill of materials: what one unit of this item is made of. Raw materials
+return an empty list, since nothing goes into them.
+
+**200**
+
+```json
+{
+  "data": [
+    {
+      "input_item": {
+        "id": 1,
+        "sku": "RAW-STEEL-SHEET",
+        "name": "Cold Rolled Steel Sheet",
+        "type": "raw",
+        "unit": "kg"
+      },
+      "quantity_per_unit": "2.5000",
+      "quantity_on_hand": "1385.0000"
+    }
+  ]
+}
+```
+
+This is what execute reads to work out how much to consume.
+
+---
 
 ### Inventory
 
-| Method | Path | |
+#### GET `/inventory`
+
+Every item across all three stages. Items that have never moved appear with
+`"0.0000"` rather than going missing.
+
+**200**, plain array
+
+```json
+{
+  "data": [
+    {
+      "item": {
+        "id": 1,
+        "sku": "RAW-STEEL-SHEET",
+        "name": "Cold Rolled Steel Sheet",
+        "type": "raw",
+        "unit": "kg"
+      },
+      "quantity_on_hand": "1385.0000",
+      "reorder_level": "500.0000",
+      "is_low_stock": false,
+      "updated_at": "2026-08-04T19:02:12+00:00"
+    }
+  ]
+}
+```
+
+#### GET `/inventory/stage/{stage}`
+
+The same shape, one stage only. `{stage}` is `raw`, `semi_finished`, or
+`finished`. Anything else gives **404**.
+
+#### GET `/inventory/low-stock`
+
+Items at or below their reorder level. This drives the dashboard alert panel.
+
+| Query | |
+|---|---|
+| `type` | optional: `raw`, `semi_finished`, `finished` |
+
+**200**, same shape as a product list row.
+
+#### POST `/inventory/receipts`
+
+Receive raw material. The only way raw stock goes up.
+
+| Field | Type | |
 |---|---|---|
-| GET | `/inventory` | every item with its current quantity |
-| GET | `/inventory/stage/{stage}` | `raw`, `semi_finished` or `finished` |
-| GET | `/inventory/low-stock` | at or below reorder level, `?type=` |
-| POST | `/inventory/receipts` | receive raw material, creates a purchase batch |
-| GET | `/items/{id}/movements` | the ledger for one item |
-| GET | `/items/{id}/recipe` | what this item is made of |
-
-### Production
-
-| Method | Path | |
-|---|---|---|
-| GET | `/production-orders` | `?stage=` `?status=` `?per_page=` |
-| POST | `/production-orders` | plans a run, does not touch stock |
-| GET | `/production-orders/{id}` | includes consumptions and output batch |
-| POST | `/production-orders/{id}/execute` | moves the stock |
-| GET | `/production-events` | what the queue worker recorded |
-
-### Batches and traceability
-
-| Method | Path | |
-|---|---|---|
-| GET | `/batches` | `?search=` `?item_type=` `?origin=` `?available_only=1` |
-| GET | `/batches/{id}` | |
-| GET | `/batches/{id}/trace` | upstream: what it was made from |
-| GET | `/batches/{id}/trace-downstream` | where this batch ended up |
-
-### Examples
-
-Receive raw material. `POST /inventory/receipts`
+| `item_id` | integer | required, must be a **raw material** |
+| `quantity` | numeric | required, greater than 0 |
+| `produced_at` | date | optional, sets the batch date used for FIFO |
+| `note` | string | optional, max 500 |
 
 ```json
 { "item_id": 1, "quantity": "500", "note": "Delivery note 4471" }
 ```
 
-Plan a run. `POST /production-orders`
+**201**
+
+```json
+{
+  "data": {
+    "id": 8,
+    "batch_number": "RM-20260804-0001",
+    "item": {
+      "id": 1,
+      "sku": "RAW-STEEL-SHEET",
+      "name": "Cold Rolled Steel Sheet",
+      "type": "raw",
+      "unit": "kg"
+    },
+    "quantity_produced": "500.0000",
+    "quantity_remaining": "500.0000",
+    "origin": "purchase",
+    "production_order_number": null,
+    "produced_at": "2026-08-04T19:32:48+00:00",
+    "created_at": "2026-08-04T19:32:48+00:00"
+  }
+}
+```
+
+Pass a semi finished or finished item and you get **422**. Those are produced,
+not bought.
+
+#### GET `/items/{id}/movements`
+
+The full ledger for one item. Every increase and decrease, with the reason.
+Add the quantities up and you get the current stock, which is the audit trail
+behind the number.
+
+**200**, paginated, newest first
+
+```json
+{
+  "data": [
+    {
+      "id": 5,
+      "type": "production_input",
+      "quantity": "-240.0000",
+      "balance_after": "1385.0000",
+      "batch_number": "RM-20260730-0001",
+      "reference_type": "App\\Models\\ProductionOrderModel",
+      "reference_id": 2,
+      "note": null,
+      "created_at": "2026-08-04T19:02:12+00:00"
+    },
+    {
+      "id": 1,
+      "type": "receipt",
+      "quantity": "2000.0000",
+      "balance_after": "2000.0000",
+      "batch_number": "RM-20260730-0001",
+      "reference_type": null,
+      "reference_id": null,
+      "note": null,
+      "created_at": "2026-08-04T19:02:09+00:00"
+    }
+  ]
+}
+```
+
+`type` is one of `receipt`, `production_input`, `production_output`.
+`reference_type` and `reference_id` point at whatever caused the movement, so a
+receipt has none and a production movement points at the order.
+
+---
+
+### Production
+
+#### GET `/production-orders`
+
+| Query | |
+|---|---|
+| `stage` | `raw_to_semi_finished` or `semi_finished_to_finished` |
+| `status` | `pending`, `completed`, `failed`, `cancelled` |
+| `per_page` | 1 to 100, default 15 |
+
+**200**, paginated.
+
+#### POST `/production-orders`
+
+Plans a run. **Nothing moves in inventory yet.**
+
+| Field | Type | |
+|---|---|---|
+| `output_item_id` | integer | required, must exist |
+| `planned_quantity` | numeric | required, greater than 0 |
 
 ```json
 { "output_item_id": 4, "planned_quantity": "10" }
 ```
 
-You never send the stage. It comes from the output item's type, so a semi
-finished output means a raw to semi run. Nothing has moved in inventory yet.
+You never send the stage. It is worked out from the output item's type, so a
+semi finished output means a raw to semi run. Ask for a raw material as output
+and you get **422**, because raw materials are bought, not made.
 
-Then `POST /production-orders/6/execute` with no body at all. That is the call
-that moves the stock.
+**201**, with `status` at `"pending"` and `output_batch` still `null`.
 
-Trace what came out. `GET /batches/7/trace`
+#### GET `/production-orders/{id}`
+
+**200**, the order with everything it touched.
+
+```json
+{
+  "data": {
+    "id": 1,
+    "order_number": "PO-20260804-0001",
+    "stage": "raw_to_semi_finished",
+    "output_item": {
+      "id": 4,
+      "sku": "SEMI-STEEL-ROD",
+      "name": "Steel Rod",
+      "type": "semi_finished",
+      "unit": "pcs"
+    },
+    "planned_quantity": "150.0000",
+    "produced_quantity": "150.0000",
+    "status": "completed",
+    "failure_reason": null,
+    "created_by": null,
+    "output_batch": {
+      "id": 3,
+      "batch_number": "SF-20260804-0001",
+      "quantity_produced": "150.0000",
+      "quantity_remaining": "27.5000",
+      "origin": "production",
+      "production_order_number": "PO-20260804-0001",
+      "produced_at": "2026-08-04T19:02:09+00:00"
+    },
+    "consumptions": [
+      {
+        "quantity_consumed": "375.0000",
+        "input_batch": {
+          "id": 1,
+          "batch_number": "RM-20260730-0001",
+          "item": {
+            "id": 1,
+            "sku": "RAW-STEEL-SHEET",
+            "name": "Cold Rolled Steel Sheet",
+            "type": "raw"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+`consumptions` is the traceability record. One row per input batch actually
+taken from, with the exact amount.
+
+#### POST `/production-orders/{id}/execute`
+
+No body. This is the call that moves stock.
+
+In one transaction it locks the order, allocates input batches oldest first,
+consumes them, creates the output batch, and writes the ledger rows. Then it
+publishes an event after the commit.
+
+**200** returns the completed order in the shape above.
+
+**409** if the order is not pending, which is what stops the same order running
+twice:
+
+```json
+{
+  "message": "Production order PO-20260804-0006 cannot be modified because it is already completed."
+}
+```
+
+**422** if any input is short. Nothing at all is written, so there is no half
+consumed batch to clean up:
+
+```json
+{
+  "message": "Insufficient inventory for Cold Rolled Steel Sheet (RAW-STEEL-SHEET): 2499997.5000 required, 1860.0000 available, short by 2498137.5000.",
+  "errors": {
+    "planned_quantity": [
+      "Insufficient inventory for Cold Rolled Steel Sheet (RAW-STEEL-SHEET): 2499997.5000 required, 1860.0000 available, short by 2498137.5000."
+    ]
+  }
+}
+```
+
+The message names the item, what was needed, what was there, and the shortfall.
+
+#### GET `/production-events`
+
+Read only. Every row here was written by the RabbitMQ worker, never by a web
+request, so this is the simplest proof the async path runs.
+
+| Query | |
+|---|---|
+| `per_page` | 1 to 100, default 15 |
+
+**200**, paginated, newest first
+
+```json
+{
+  "data": [
+    {
+      "id": 5,
+      "event_id": "45681f48-f07b-4445-b8c8-5f777af9d85e",
+      "event_type": "production.completed",
+      "routing_key": "production.semi_to_finished.completed",
+      "order_number": "PO-20260804-0005",
+      "attempts": 1,
+      "payload": {
+        "stage": "semi_finished_to_finished",
+        "output": {
+          "item_sku": "FIN-STEEL-PIPE",
+          "item_name": "Steel Pipe",
+          "item_type": "finished",
+          "batch_number": "FG-20260804-0003",
+          "quantity": "15.0000"
+        },
+        "consumed": [
+          {
+            "item_sku": "SEMI-STEEL-ROD",
+            "batch_number": "SF-20260804-0001",
+            "quantity": "22.5000"
+          }
+        ],
+        "order_number": "PO-20260804-0005",
+        "production_order_id": 5,
+        "completed_at": "2026-08-04T19:02:12+00:00"
+      },
+      "occurred_at": "2026-08-04T19:02:12+00:00",
+      "processed_at": "2026-08-04T19:02:43+00:00",
+      "lag_seconds": 31
+    }
+  ]
+}
+```
+
+`occurred_at` is when the API published it, `processed_at` is when the worker
+handled it, and `lag_seconds` is the gap. A non zero gap is the async pipeline
+showing its work. `event_id` is the idempotency key.
+
+---
+
+### Batches and traceability
+
+#### GET `/batches`
+
+One table covers all three stages.
+
+| Query | |
+|---|---|
+| `search` | batch number, sku, or item name |
+| `item_type` | `raw`, `semi_finished`, `finished` |
+| `origin` | `purchase` or `production` |
+| `available_only` | `1` hides batches that are used up |
+| `per_page` | 1 to 100, default 15 |
+
+**200**, paginated.
+
+#### GET `/batches/{id}`
+
+**200**
+
+```json
+{
+  "data": {
+    "id": 1,
+    "batch_number": "RM-20260730-0001",
+    "item": {
+      "id": 1,
+      "sku": "RAW-STEEL-SHEET",
+      "name": "Cold Rolled Steel Sheet",
+      "type": "raw",
+      "unit": "kg"
+    },
+    "quantity_produced": "2000.0000",
+    "quantity_remaining": "1385.0000",
+    "origin": "purchase",
+    "production_order_number": null,
+    "produced_at": "2026-07-30T19:02:09+00:00",
+    "created_at": "2026-08-04T19:02:09+00:00"
+  }
+}
+```
+
+`origin` tells you whether the batch was bought or made. A `purchase` batch has
+no production order.
+
+#### GET `/batches/{id}/trace`
+
+Upstream. Where did this come from?
+
+**200**, a recursive tree
 
 ```json
 {
@@ -300,26 +787,48 @@ Trace what came out. `GET /batches/7/trace`
 }
 ```
 
-The tree stops at a `purchase` batch. That is where the material entered the
-plant, so there is nothing further back to find.
+The tree stops at a `purchase` batch. It has no `consumed` key at all, because
+that is where the material entered the plant and there is nothing further back
+to find.
+
+This is the recall question answered in one call.
+
+#### GET `/batches/{id}/trace-downstream`
+
+The other direction. Where did this end up?
+
+Same tree shape, but the nesting key is `used_in` instead of `consumed`. Point
+it at a bad raw material batch and you get every finished product affected,
+which is the answer to a supplier recall.
+
+---
 
 ### Errors
 
-| Code | When |
-|---|---|
-| 401 | bad or missing token |
-| 404 | no such record, or an unknown stage in the URL |
-| 409 | the action is not allowed in the current state (order already ran, item still in use) |
-| 422 | validation failed, or not enough stock |
+Every error is JSON with a `message`. Validation errors add a field keyed
+`errors` object.
 
-A 422 for short stock tells you exactly how short:
+| Code | When | Body |
+|---|---|---|
+| 401 | bad or missing token | `{"message": "Unauthenticated."}` |
+| 404 | no such record, or an unknown stage in the URL | `{"message": "No query results for model [App\\Models\\ItemModel] 9999"}` |
+| 409 | the action is not allowed in the current state | order already ran, item still in use |
+| 422 | validation failed, or not enough stock | `message` plus an `errors` map |
+
+A 422 carries every failing field at once:
 
 ```json
 {
-  "message": "Insufficient inventory for Cold Rolled Steel Sheet (RAW-STEEL-SHEET): 2499997.5000 required, 1760.0000 available, short by 2498237.5000.",
-  "errors": { "planned_quantity": ["...same message..."] }
+  "message": "The sku has already been taken. (and 1 more error)",
+  "errors": {
+    "sku": ["The sku has already been taken."],
+    "unit_id": ["The unit id field is required."]
+  }
 }
 ```
+
+The split between 409 and 422 is deliberate. 422 means the request was wrong.
+409 means the request was fine but the world has moved on.
 
 ---
 
