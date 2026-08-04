@@ -1,32 +1,18 @@
-# ---------------------------------------------------------------------------
-# Production Management System — full stack.
 #
-#   docker compose up -d
+# docker compose up -d
 #
-# That single command builds the backend image, waits for MySQL and RabbitMQ to
-# be healthy, installs dependencies, runs migrations + seeders, starts the API,
-# the RabbitMQ consumer, and the React admin UI.
+# Builds the backend, waits for MySQL and RabbitMQ, migrates and seeds, then
+# starts the API, the consumer, and the React UI. The API and the worker share
+# one image and differ only by APP_ROLE, so their code can never drift.
 #
-# Apache + mod_php serves the API directly, so there is no separate web-server
-# container. The API and the worker run the same image, distinguished only by
-# APP_ROLE, so their code and extensions can never drift.
-#
-# Credentials below are development defaults and intentionally committed so the
+# The credentials below are development defaults, committed on purpose so the
 # stack boots with no manual setup. They match backend/.env.example.
-# ---------------------------------------------------------------------------
-
+#
 name: pms
 
-# ---------------------------------------------------------------------------
-# Everything the backend needs to reach the other containers.
-#
-# Declared here rather than left to backend/.env on purpose. .env is gitignored
-# and a developer's copy may legitimately point at a local database instead —
-# Laravel's dotenv loader does not overwrite variables that already exist in the
-# environment, so these values always win inside a container. That is what makes
-# `docker compose up` behave identically no matter what the working copy's .env
-# happens to contain.
-# ---------------------------------------------------------------------------
+# Set here rather than left to backend/.env, which is gitignored and may point
+# somewhere else on a developer's machine. Dotenv never overwrites a variable
+# that already exists, so these always win inside a container.
 x-backend-env: &backend-env
   DB_CONNECTION: mysql
   DB_HOST: mysql
@@ -55,7 +41,7 @@ services:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
     ports:
-      - "3307:3306"   # 3307 on the host to avoid clashing with a local MySQL
+      - "3307:3306"   # avoids clashing with a local MySQL
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -76,7 +62,7 @@ services:
       RABBITMQ_DEFAULT_VHOST: /
     ports:
       - "5672:5672"     # AMQP
-      - "15672:15672"   # management UI — http://localhost:15672
+      - "15672:15672"   # console at http://localhost:15672
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -97,7 +83,7 @@ services:
       <<: *backend-env
       APP_ROLE: app
     ports:
-      - "8001:80"       # API — http://localhost:8001 (8000 is used by another local project)
+      - "8001:80"       # API at http://localhost:8001
     volumes:
       - ./backend:/var/www/html
     depends_on:
@@ -110,7 +96,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 120s   # generous: first boot runs composer install
+      start_period: 120s   # the first boot runs composer install
     networks: [pms]
 
   worker:
@@ -122,7 +108,6 @@ services:
     environment:
       <<: *backend-env
       APP_ROLE: worker
-    # The consumer that processes production events asynchronously.
     command: ["php", "artisan", "queue:work", "rabbitmq", "--tries=3", "--max-time=3600"]
     volumes:
       - ./backend:/var/www/html
@@ -131,7 +116,7 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_healthy
-    stop_grace_period: 30s   # allow the consumer to finish the in-flight message
+    stop_grace_period: 30s   # let the in-flight message finish
     networks: [pms]
 
   frontend:
@@ -143,7 +128,7 @@ services:
       VITE_API_URL: http://localhost:8001/api/v1
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     ports:
-      - "5173:5173"     # admin UI — http://localhost:5173
+      - "5173:5173"     # admin UI at http://localhost:5173
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
