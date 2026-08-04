@@ -95,13 +95,11 @@ export default function Production() {
       )
       load()
     } catch (err) {
-      // the interesting failures land here: 422 insufficient inventory (with the shortfall in the body) and 409 already executed
-      const b = err.body
-      setError(
-        b?.shortfall
-          ? `${err.message} Short by ${qty(b.shortfall)}.`
-          : err.message,
-      )
+      // the interesting failures land here: 422 insufficient inventory (the
+      // shortfall is spelled out in the validation message) and 409 already
+      // executed
+      const first = Object.values(err.body?.errors ?? {})[0]?.[0]
+      setError(first ?? err.message)
       load()
     } finally {
       setExecutingId(null)

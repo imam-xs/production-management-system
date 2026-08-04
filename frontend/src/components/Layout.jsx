@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { api } from '../api.js'
 
-// Grouped to mirror the domain rather than the API surface — a reviewer opening
-// the UI should be able to see the production workflow in the navigation.
+// grouped to mirror the domain rather than the API surface, a reviewer opening
+// the UI should be able to see the production workflow in the navigation
 const NAV = [
   {
     group: null,
@@ -55,16 +55,10 @@ export default function Layout({ user, onLogout, children }) {
   const [lowStockCount, setLowStockCount] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Close the drawer after navigating, otherwise it stays over the page the
-  // user just asked for. Wide screens ignore the flag entirely.
+  // close the drawer after navigating, otherwise it stays over the page the
+  // user just asked for. Wide screens ignore the flag entirely
   useEffect(() => setMenuOpen(false), [location.pathname])
 
-  // Raw materials only: the badge sits beside that link, so counting every
-  // stage would show a number the page it labels cannot account for.
-  // Shortages in the other stages are visible on the Dashboard.
-  //
-  // Refreshed on navigation so the badge reflects the effect of whatever the
-  // user just did (receiving stock, running production).
   useEffect(() => {
     api
       .get('/inventory/low-stock?type=raw')

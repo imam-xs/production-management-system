@@ -16,9 +16,9 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [checking, setChecking] = useState(true)
 
-  // A token in localStorage may be stale (revoked by logout elsewhere, or the
+  // a token in localStorage may be stale (revoked by logout elsewhere, or the
   // database was reseeded), so it is validated against /auth/me before the app
-  // renders rather than trusted on sight.
+  // renders rather than trusted on sight
   useEffect(() => {
     if (!getToken()) {
       setChecking(false)

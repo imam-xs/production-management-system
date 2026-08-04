@@ -1,6 +1,4 @@
-// Small shared pieces used across pages. Kept in one file on purpose — each is
-// a handful of lines and splitting them into separate modules would add more
-// navigation than clarity.
+// small shared pieces used across pages
 
 import { useEffect, useRef } from 'react'
 
@@ -33,16 +31,10 @@ export function Pill({ value }) {
   return <span className={`pill ${value}`}>{String(value).replace(/_/g, ' ')}</span>
 }
 
-/**
- * Success messages clear themselves; errors do not.
- *
- * A confirmation the user has already read is just clutter, but a failure they
- * missed is a failure they will repeat — so an error stays until the next action
- * replaces it. Pages opt in to the timer by passing `onClearSuccess`.
- */
+// success messages clear themselves; errors do not
 export function Alert({ error, success, onClearSuccess, timeout = 6000 }) {
-  // Held in a ref so an inline arrow callback does not restart the timer on
-  // every render — the effect depends on the message itself, not the handler.
+  // held in a ref so an inline arrow callback does not restart the timer on
+  // every render — the effect depends on the message itself, not the handler
   const clear = useRef(onClearSuccess)
   clear.current = onClearSuccess
 
@@ -65,16 +57,9 @@ export function Empty({ children = 'Nothing to show yet.' }) {
   return <div className="empty">{children}</div>
 }
 
-/**
- * Deliberately does NOT close on a backdrop click.
- *
- * These modals hold half-typed forms and there is no draft to recover — a stray
- * click beside the dialog would discard the lot silently. Escape and Cancel both
- * remain, and both are deliberate acts rather than a slip of the mouse.
- */
+// deliberately does NOT close on a backdrop click
 export function Modal({ title, onClose, onSubmit, submitting, submitLabel = 'Save', children }) {
-  // Held in a ref so an inline arrow from the caller does not re-register the
-  // listener on every render.
+  // held in a ref so an inline arrow from the caller does not re-register the listener on every render
   const close = useRef(onClose)
   close.current = onClose
 
@@ -109,16 +94,7 @@ export function Modal({ title, onClose, onSubmit, submitting, submitLabel = 'Sav
   )
 }
 
-/**
- * Confirmation for a destructive action.
- *
- * Replaces window.confirm, which cannot be styled, blocks the whole tab, and
- * gives no room to say *what* is about to be lost. Here the item is named and
- * the consequence spelled out, so the click is an informed one.
- *
- * Cancel is the safe default and takes the ordinary button; the destructive
- * action is the one that has to be deliberately chosen.
- */
+// confirmation for a destructive action
 export function Confirm({
   title,
   message,
@@ -166,8 +142,8 @@ export function Confirm({
   )
 }
 
-// Quantities arrive from the API as decimal strings (never floats) so the exact
-// value survives. Trim the trailing zeros only for display.
+// quantities arrive from the API as decimal strings (never floats) so the exact
+// value survives. trim the trailing zeros only for display
 export function qty(value) {
   if (value === null || value === undefined) return '—'
   const n = String(value)

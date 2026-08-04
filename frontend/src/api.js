@@ -1,5 +1,5 @@
-// Thin wrapper over fetch. No axios — one less dependency, and the only two
-// things we actually need are a base URL and the bearer token.
+// thin wrapper over fetch. no axios, one less dependency, and the only two
+// things we actually need are a base URL and the bearer token
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001/api/v1'
 const TOKEN_KEY = 'pms_token'
@@ -13,9 +13,6 @@ export function setToken(token) {
   else localStorage.removeItem(TOKEN_KEY)
 }
 
-// Thrown for any non-2xx response. `body` carries the API's JSON so callers can
-// show the real domain message (e.g. the insufficient-inventory detail) rather
-// than a generic failure.
 export class ApiError extends Error {
   constructor(status, body) {
     super(body?.message || `Request failed (${status})`)
@@ -41,8 +38,7 @@ async function request(method, path, data) {
   const body = await res.json().catch(() => null)
 
   if (!res.ok) {
-    // An expired or revoked token should drop us back to the login screen
-    // rather than leaving the UI in a half-broken state.
+    // an expired or revoked token should drop us back to the login screen rather than leaving the UI in a half-broken state
     if (res.status === 401 && getToken()) {
       setToken(null)
       window.location.reload()
@@ -60,7 +56,7 @@ export const api = {
   del: (path) => request('DELETE', path),
 }
 
-// Maps a validation error response into { field: 'first message' }.
+// maps a validation error response into { field: 'first message' }
 export function fieldErrors(error) {
   const errors = error?.body?.errors
   if (!errors) return {}
