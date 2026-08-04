@@ -10,6 +10,7 @@ use App\Repositories\Contracts\ItemRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+
 class ItemService
 {
     public function __construct(

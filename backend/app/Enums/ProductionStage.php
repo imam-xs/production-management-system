@@ -8,14 +8,6 @@ enum ProductionStage: string
     case RawToSemiFinished = 'raw_to_semi_finished';
     case SemiFinishedToFinished = 'semi_finished_to_finished';
 
-    public function inputType(): ItemType
-    {
-        return match ($this) {
-            self::RawToSemiFinished => ItemType::Raw,
-            self::SemiFinishedToFinished => ItemType::SemiFinished,
-        };
-    }
-
     public function outputType(): ItemType
     {
         return match ($this) {
@@ -33,7 +25,7 @@ enum ProductionStage: string
         };
     }
 
-    // event name recorded on the production event log — identifies which
+    // event name recorded on the production event log, identifies which
     // transition the message describes
     public function routingKey(): string
     {
