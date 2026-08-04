@@ -15,6 +15,7 @@ batch to the raw steel it started as.
 
 ![Traceability](docs/screenshots/traceability.png)
 
+
 **Dashboard.** Each stage keeps its own inventory.
 
 ![Dashboard](docs/screenshots/dashboard.png)
