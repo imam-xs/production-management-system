@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 interface BatchRepositoryInterface
 {
     /**
-     * available_only narrows to batches that still hold stock — the FIFO view.
+     * available_only narrows to batches that still hold stock — the FIFO view
      *
      * @param  array{search?: ?string, item_type?: ?ItemType, origin?: ?BatchOrigin, available_only?: bool}  $filters
      * @return LengthAwarePaginator<int, BatchModel>

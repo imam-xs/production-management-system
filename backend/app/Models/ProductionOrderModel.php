@@ -14,9 +14,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * The casts below are what actually convert these columns; the annotations let
- * static analysis see the enum and date types rather than the raw strings.
- *
  * @property ProductionStage $stage
  * @property ProductionOrderStatus $status
  * @property CarbonInterface|null $completed_at
@@ -26,7 +23,6 @@ class ProductionOrderModel extends Model
     /** @use HasFactory<ProductionOrderModelFactory> */
     use HasFactory;
 
-    // the class name no longer matches the table, so name it explicitly
     protected $table = 'production_orders';
 
     protected $fillable = [
@@ -41,9 +37,7 @@ class ProductionOrderModel extends Model
         'created_by',
     ];
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -55,43 +49,32 @@ class ProductionOrderModel extends Model
         ];
     }
 
-    /**
-     * @return BelongsTo<ItemModel, $this>
-     */
+    /** @return BelongsTo<ItemModel, $this> */
     public function outputItem(): BelongsTo
     {
         return $this->belongsTo(ItemModel::class, 'output_item_id')->withTrashed();
     }
 
-    /**
-     * @return BelongsTo<UserModel, $this>
-     */
+    /** @return BelongsTo<UserModel, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(UserModel::class, 'created_by');
     }
 
-    /**
-     * @return HasOne<BatchModel, $this>
-     */
+    /** @return HasOne<BatchModel, $this> */
     public function outputBatch(): HasOne
     {
         return $this->hasOne(BatchModel::class, 'production_order_id');
     }
 
-    /**
-     * Which input batches this run drew from, and how much of each.
-     *
-     * @return HasMany<ProductionConsumptionModel, $this>
-     */
+    // Which input batches this run drew from, and how much of each.
+    /** @return HasMany<ProductionConsumptionModel, $this> */
     public function consumptions(): HasMany
     {
         return $this->hasMany(ProductionConsumptionModel::class, 'production_order_id');
     }
 
-    /**
-     * @return HasMany<ProductionEventLogModel, $this>
-     */
+    /** @return HasMany<ProductionEventLogModel, $this> */
     public function eventLogs(): HasMany
     {
         return $this->hasMany(ProductionEventLogModel::class, 'production_order_id');

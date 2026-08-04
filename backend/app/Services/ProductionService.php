@@ -39,9 +39,6 @@ class ProductionService
     ) {}
 
     /**
-     * @return LengthAwarePaginator<int, ProductionOrderModel>
-     */
-    /**
      * @param  array{stage?: ?ProductionStage, status?: ?ProductionOrderStatus}  $filters
      * @return LengthAwarePaginator<int, ProductionOrderModel>
      */
@@ -55,11 +52,8 @@ class ProductionService
         return $this->orders->findByIdOrFail($id);
     }
 
-    /**
-     * The log the RabbitMQ consumer writes.
-     *
-     * @return LengthAwarePaginator<int, ProductionEventLogModel>
-     */
+    // The log the RabbitMQ consumer writes.
+    /** @return LengthAwarePaginator<int, ProductionEventLogModel> */
     public function eventLog(int $perPage = 15): LengthAwarePaginator
     {
         return ProductionEventLogModel::query()
@@ -101,9 +95,9 @@ class ProductionService
             ]);
         }
 
-        // Same retry as BatchService: the sequence is read then written, so two
+        // same retry as BatchService: the sequence is read then written, so two
         // requests in the same second can compute the same number. The unique
-        // index rejects the loser, and it takes the next one.
+        // index rejects the loser, and it takes the next one
         for ($attempt = 1; ; $attempt++) {
             try {
                 return $this->orders->create([
@@ -176,11 +170,8 @@ class ProductionService
         return $locked;
     }
 
-    /**
-     * Plan which batches will supply each input — nothing is written yet.
-     *
-     * @return list<array{item: ItemModel, plan: list<array{batch: BatchModel, quantity: string}>}>
-     */
+    // plan which batches will supply each input — nothing is written yet
+    /** @return list<array{item: ItemModel, plan: list<array{batch: BatchModel, quantity: string}>}> */
     private function allocateInputs(ProductionOrderModel $order, ItemModel $outputItem): array
     {
         $allocations = [];
@@ -197,11 +188,8 @@ class ProductionService
         return $allocations;
     }
 
-    /**
-     * Consume the allocated inputs.
-     *
-     * @param  list<array{item: ItemModel, plan: list<array{batch: BatchModel, quantity: string}>}>  $allocations
-     */
+    // Consume the allocated inputs.
+    /** @param  list<array{item: ItemModel, plan: list<array{batch: BatchModel, quantity: string}>}>  $allocations */
     private function consumeInputs(ProductionOrderModel $order, array $allocations): void
     {
         foreach ($allocations as $allocation) {
@@ -209,7 +197,7 @@ class ProductionService
         }
     }
 
-    // /create the output batch, add it to stock and record the matching ledger row
+    // create the output batch, add it to stock and record the matching ledger row
 
     private function produceOutput(ProductionOrderModel $order, ItemModel $outputItem): BatchModel
     {
@@ -238,12 +226,8 @@ class ProductionService
         return $outputBatch;
     }
 
-    /**
-     * Deduct one input's planned quantity from its batches, recording a
-     * consumption edge and a ledger row for each.
-     *
-     * @param  list<array{batch: BatchModel, quantity: string}>  $plan
-     */
+    // deduct one input's planned quantity from its batches, recording a consumption edge and a ledger row for each.
+    /** @param  list<array{batch: BatchModel, quantity: string}>  $plan */
     private function consumeAllocation(ProductionOrderModel $order, ItemModel $inputItem, array $plan): void
     {
         $stock = $this->inventory->lockStockFor($inputItem);

@@ -2,18 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Models\InventoryMovementModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * @property InventoryMovementModel $resource
- */
 class InventoryMovementResource extends JsonResource
 {
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return [

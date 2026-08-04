@@ -13,7 +13,6 @@ class UserModel extends Authenticatable
 {
     use HasApiTokens;
 
-    // the class name no longer matches the table, so name it explicitly
     protected $table = 'users';
 
     /** @use HasFactory<UserModelFactory> */
@@ -21,26 +20,20 @@ class UserModel extends Authenticatable
 
     use Notifiable;
 
-    /**
-     * @var list<string>
-     */
+    /** @var list<string> */
     protected $fillable = [
         'name',
         'email',
         'password',
     ];
 
-    /**
-     * @var list<string>
-     */
+    /** @var list<string> */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -49,9 +42,7 @@ class UserModel extends Authenticatable
         ];
     }
 
-    /**
-     * @return HasMany<ProductionOrderModel, $this>
-     */
+    /** @return HasMany<ProductionOrderModel, $this> */
     public function productionOrders(): HasMany
     {
         return $this->hasMany(ProductionOrderModel::class, 'created_by');

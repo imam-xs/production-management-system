@@ -12,7 +12,6 @@ class UnitModel extends Model
     /** @use HasFactory<UnitModelFactory> */
     use HasFactory;
 
-    // the class name no longer matches the table, so name it explicitly
     protected $table = 'units';
 
     protected $fillable = [
@@ -20,9 +19,7 @@ class UnitModel extends Model
         'name',
     ];
 
-    /**
-     * @return HasMany<ItemModel, $this>
-     */
+    /** @return HasMany<ItemModel, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(ItemModel::class, 'unit_id');

@@ -5,16 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Cached on-hand quantity for an item.
- *
- * Written only by InventoryService, always inside the transaction that wrote the
- * corresponding inventory_movements rows. Never the authority — see the
- * item_stocks migration for why it exists.
- *
- * @property int $item_id
- * @property string $quantity_on_hand
- */
+/** @property string $quantity_on_hand */
 class ItemStockModel extends Model
 {
     protected $table = 'item_stocks';
@@ -23,10 +14,8 @@ class ItemStockModel extends Model
 
     public $incrementing = false;
 
-    /**
-     * Only `updated_at` exists on this table — there is no creation event worth
-     * recording for a cache row.
-     */
+    // Only `updated_at` exists on this table — there is no creation event
+    // worth recording for a cache row.
     public const CREATED_AT = null;
 
     protected $fillable = [
@@ -34,9 +23,7 @@ class ItemStockModel extends Model
         'quantity_on_hand',
     ];
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -45,9 +32,7 @@ class ItemStockModel extends Model
         ];
     }
 
-    /**
-     * @return BelongsTo<ItemModel, $this>
-     */
+    /** @return BelongsTo<ItemModel, $this> */
     public function item(): BelongsTo
     {
         return $this->belongsTo(ItemModel::class);

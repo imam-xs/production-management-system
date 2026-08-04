@@ -66,9 +66,7 @@ class InventoryService
         });
     }
 
-    /**
-     * @return Collection<int, ItemModel>
-     */
+    /** @return Collection<int, ItemModel> */
     public function stockLevels(?ItemType $type = null): Collection
     {
         return $this->inventory->stockLevels($type);
@@ -79,9 +77,7 @@ class InventoryService
         return $this->inventory->stockFor($item);
     }
 
-    /**
-     * @return LengthAwarePaginator<int, InventoryMovementModel>
-     */
+    /** @return LengthAwarePaginator<int, InventoryMovementModel> */
     public function movementsFor(ItemModel $item, int $perPage = 15): LengthAwarePaginator
     {
         return $this->inventory->paginateMovements($item, $perPage);

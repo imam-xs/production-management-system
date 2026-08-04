@@ -2,30 +2,15 @@
 
 namespace App\Http\Resources;
 
-use App\Models\BillOfMaterialModel;
 use App\Models\ItemStockModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * One line of a product's recipe: an input item and how much of it a single
- * unit of the output requires.
- *
- * Read-only. Recipes are part of the plant's setup and are seeded, not managed
- * over the API — this endpoint exists so an operator can see what a production
- * run will consume *before* committing to it, rather than discovering the
- * quantities only when stock moves.
- *
- * Carries the input's current stock so the caller can show "needs 250 kg, have
- * 500" without a second round trip.
- *
- * @property BillOfMaterialModel $resource
- */
+// one recipe line: an input item and how much of it one output unit needs.
+// carries the input's current stock so the caller can show "needs 250, have 500"
 class RecipeLineResource extends JsonResource
 {
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         $input = $this->resource->inputItem;

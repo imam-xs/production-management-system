@@ -16,9 +16,7 @@ class InventoryAllocator
         private readonly BatchRepositoryInterface $batches,
     ) {}
 
-    /**
-     * @return list<array{batch: BatchModel, quantity: string}>
-     */
+    /** @return list<array{batch: BatchModel, quantity: string}> */
     public function allocate(ItemModel $item, string $requiredQuantity): array
     {
         $available = $this->batches->lockAvailableFifo($item->id);

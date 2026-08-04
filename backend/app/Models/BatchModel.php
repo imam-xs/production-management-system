@@ -12,15 +12,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A uniquely identifiable lot of one item.
- *
- * @property int $id
- * @property string $batch_number
- * @property int $item_id
  * @property string $quantity_produced
  * @property string $quantity_remaining
  * @property BatchOrigin $origin
- * @property int|null $production_order_id
  * @property CarbonInterface $produced_at
  */
 class BatchModel extends Model
@@ -40,9 +34,7 @@ class BatchModel extends Model
         'produced_at',
     ];
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -53,50 +45,33 @@ class BatchModel extends Model
         ];
     }
 
-    /**
-     * @return BelongsTo<ItemModel, $this>
-     */
+    /** @return BelongsTo<ItemModel, $this> */
     public function item(): BelongsTo
     {
-        // withTrashed: a batch is history, and history must keep resolving even
-        // if the item was later retired. Without this the relation returns null
-        // for a soft-deleted item and every trace through this batch breaks.
         return $this->belongsTo(ItemModel::class)->withTrashed();
     }
 
-    /**
-     * The run that created this batch — null for purchased material, which is
-     * where the upstream trace terminates.
-     *
-     * @return BelongsTo<ProductionOrderModel, $this>
-     */
+    // null for purchased material, where the upstream trace ends
+    /** @return BelongsTo<ProductionOrderModel, $this> */
     public function productionOrder(): BelongsTo
     {
         return $this->belongsTo(ProductionOrderModel::class);
     }
 
-    /**
-     * Runs that consumed this batch — the downstream ("where did it go?")
-     * direction of traceability.
-     *
-     * @return HasMany<ProductionConsumptionModel, $this>
-     */
+    // the downstream direction: where did this batch go?
+    /** @return HasMany<ProductionConsumptionModel, $this> */
     public function consumedBy(): HasMany
     {
         return $this->hasMany(ProductionConsumptionModel::class, 'input_batch_id');
     }
 
-    /**
-     * @return HasMany<InventoryMovementModel, $this>
-     */
+    /** @return HasMany<InventoryMovementModel, $this> */
     public function movements(): HasMany
     {
         return $this->hasMany(InventoryMovementModel::class, 'batch_id');
     }
 
     /**
-     * Batches with stock left, for FIFO allocation.
-     *
      * @param  Builder<$this>  $query
      * @return Builder<$this>
      */

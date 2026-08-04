@@ -45,7 +45,7 @@ class ProductionOrderRepository implements ProductionOrderRepositoryInterface
 
     public function lockById(int $id): ?ProductionOrderModel
     {
-        // No eager loading: a locking read should touch exactly the row it locks.
+        // no eager loading: a locking read should touch exactly the row it locks
         return ProductionOrderModel::query()->lockForUpdate()->find($id);
     }
 

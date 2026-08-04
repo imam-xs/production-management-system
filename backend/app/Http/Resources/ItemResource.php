@@ -2,29 +2,16 @@
 
 namespace App\Http\Resources;
 
-use App\Models\ItemModel;
 use App\Models\ItemStockModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * @property ItemModel $resource
- */
 class ItemResource extends JsonResource
 {
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
-        // A brand new item has no item_stocks row yet — the row is created
-        // lazily on first movement (see InventoryRepository::stockFor) — so
-        // "no stock yet" must read as zero rather than null.
-        //
-        // Larastan types a HasOne access as non-nullable, which is wrong here:
-        // the relation genuinely resolves to null until that first movement.
-        // The annotation restores the real type.
-        /** @var ItemStockModel|null $stock */
+        // null until the item's first movement, so "no stock yet" reads as zero
         $stock = $this->resource->stock;
 
         $quantityOnHand = $stock instanceof ItemStockModel
@@ -48,15 +35,8 @@ class ItemResource extends JsonResource
         ];
     }
 
-    /**
-     * Whether deletion would be accepted, so the UI can disable the action
-     * rather than offer a click that always fails.
-     *
-     * Mirrors ItemService::delete(), which stays the authority — this is a hint
-     * for the interface, never the enforcement. Reads the `withExists` flags the
-     * repository attaches; if a caller loaded the item without them, the answer
-     * is a conservative `false` rather than a wrong `true`.
-     */
+    // a hint for the UI, never the enforcement: ItemService::delete() decides.
+    // reads the repository's withExists flags; missing flags mean false, not true
     private function canDelete(): bool
     {
         foreach (['batches_exists', 'bill_of_materials_exists', 'used_in_exists'] as $flag) {

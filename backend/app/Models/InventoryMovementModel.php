@@ -10,22 +10,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
- * One row of the append-only stock ledger.
- *
- * @property int $id
- * @property int $item_id
- * @property int|null $batch_id
  * @property MovementType $type
  * @property string $quantity Signed: negative for consumption.
  * @property string $balance_after
- * @property string|null $note
  */
 class InventoryMovementModel extends Model
 {
     /** @use HasFactory<InventoryMovementModelFactory> */
     use HasFactory;
 
-    // the class name no longer matches the table, so name it explicitly
     protected $table = 'inventory_movements';
 
     protected $fillable = [
@@ -39,9 +32,7 @@ class InventoryMovementModel extends Model
         'note',
     ];
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -51,29 +42,19 @@ class InventoryMovementModel extends Model
         ];
     }
 
-    /**
-     * @return BelongsTo<ItemModel, $this>
-     */
+    /** @return BelongsTo<ItemModel, $this> */
     public function item(): BelongsTo
     {
-        // withTrashed — see BatchModel::item(). A ledger entry must never lose the
-        // name of what it moved.
         return $this->belongsTo(ItemModel::class)->withTrashed();
     }
 
-    /**
-     * @return BelongsTo<BatchModel, $this>
-     */
+    /** @return BelongsTo<BatchModel, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(BatchModel::class);
     }
 
-    /**
-     * What caused this movement — typically a ProductionOrderModel.
-     *
-     * @return MorphTo<Model, $this>
-     */
+    /** @return MorphTo<Model, $this> */
     public function reference(): MorphTo
     {
         return $this->morphTo();

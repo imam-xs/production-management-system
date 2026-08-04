@@ -51,9 +51,7 @@ class BatchModelFactory extends Factory
         return $this->state(['item_id' => $item->id]);
     }
 
-    /**
-     * A manufactured batch, linked to the run that created it.
-     */
+    // a manufactured batch, linked to the run that created it
     public function produced(ProductionOrderModel $order): self
     {
         return $this->state([

@@ -2,18 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Models\ProductionEventLogModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * @property ProductionEventLogModel $resource
- */
 class ProductionEventLogResource extends JsonResource
 {
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return [
@@ -26,8 +20,8 @@ class ProductionEventLogResource extends JsonResource
             'payload' => $this->resource->payload,
             'occurred_at' => $this->resource->occurred_at->toIso8601String(),
             'processed_at' => $this->resource->processed_at->toIso8601String(),
-            // How long the message spent between being published and being
-            // handled by the worker — visible proof the path is asynchronous.
+            // how long the message spent between being published and being
+            // handled by the worker visible proof the path is asynchronous
             'lag_seconds' => $this->resource->occurred_at->diffInSeconds($this->resource->processed_at),
         ];
     }

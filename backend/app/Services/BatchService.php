@@ -22,9 +22,6 @@ class BatchService
     ) {}
 
     /**
-     * @return LengthAwarePaginator<int, BatchModel>
-     */
-    /**
      * @param  array{search?: ?string, item_type?: ?ItemType, origin?: ?BatchOrigin, available_only?: bool}  $filters
      * @return LengthAwarePaginator<int, BatchModel>
      */
@@ -33,9 +30,6 @@ class BatchService
         return $this->batches->paginate($filters, $perPage);
     }
 
-    /**
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
     public function findOrFail(int $id): BatchModel
     {
         return $this->batches->findByIdOrFail($id);

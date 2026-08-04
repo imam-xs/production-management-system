@@ -28,9 +28,6 @@ class ItemService
     ) {}
 
     /**
-     * @return LengthAwarePaginator<int, ItemModel>
-     */
-    /**
      * @param  array{search?: ?string, is_active?: ?bool}  $filters
      * @return LengthAwarePaginator<int, ItemModel>
      */
@@ -39,17 +36,12 @@ class ItemService
         return $this->items->paginateByType($type, $filters, $perPage);
     }
 
-    /**
-     * @return Collection<int, ItemModel>
-     */
+    /** @return Collection<int, ItemModel> */
     public function allOfType(ItemType $type): Collection
     {
         return $this->items->allOfType($type);
     }
 
-    /**
-     * @throws ModelNotFoundException
-     */
     public function findOrFail(int $id, ItemType $type): ItemModel
     {
         $item = $this->items->findByIdAndType($id, $type);
@@ -61,9 +53,7 @@ class ItemService
         return $item;
     }
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
+    /** @param  array<string, mixed>  $attributes */
     public function create(ItemType $type, array $attributes): ItemModel
     {
         // $type wins regardless of what $attributes contains — a raw-material
@@ -71,9 +61,7 @@ class ItemService
         return $this->items->create([...$attributes, 'type' => $type]);
     }
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
+    /** @param  array<string, mixed>  $attributes */
     public function update(ItemModel $item, array $attributes): ItemModel
     {
         // type is immutable after creation: changing it would orphan the
@@ -84,17 +72,13 @@ class ItemService
         return $this->items->update($item, $attributes);
     }
 
-    /**
-     * Delete an item — only ever one that nothing depends on.
-     *
-     * Checked in order of how obvious the answer is to the person clicking:
-     * stock on hand first, then production history, then recipes. All three are
-     * refusals rather than cascades, because every one of them would break a
-     * traceability chain that already exists.
-     *
-     * A product that has been used is retired by clearing `is_active`, not by
-     * deleting it — the records that name it must keep resolving.
-     */
+    // Delete an item — only ever one that nothing depends on. Checked in
+    // order of how obvious the answer is to the person clicking: stock on
+    // hand first, then production history, then recipes. All three are
+    // refusals rather than cascades, because every one of them would break a
+    // traceability chain that already exists. A product that has been used
+    // is retired by clearing `is_active`, not by deleting it — the records
+    // that name it must keep resolving.
     public function delete(ItemModel $item): void
     {
         if ($this->batches->hasRemainingStock($item)) {
@@ -112,9 +96,7 @@ class ItemService
         $this->items->delete($item);
     }
 
-    /**
-     * @return Collection<int, ItemModel>
-     */
+    /** @return Collection<int, ItemModel> */
     public function lowStock(?ItemType $type = null): Collection
     {
         return $this->items->lowStock($type);

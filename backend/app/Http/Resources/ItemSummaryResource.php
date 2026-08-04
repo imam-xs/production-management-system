@@ -2,23 +2,14 @@
 
 namespace App\Http\Resources;
 
-use App\Models\ItemModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * The compact shape used when an item is nested inside a batch or production
- * order response — just enough to identify and label it, not its full
- * inventory state. Keeps those payloads flat instead of recursing into
- * ItemResource's own stock lookup.
- *
- * @property ItemModel $resource
- */
+// the compact shape used when an item is nested inside another response:
+// enough to identify it, without ItemResource's stock lookup
 class ItemSummaryResource extends JsonResource
 {
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return [
