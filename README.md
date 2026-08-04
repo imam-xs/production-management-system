@@ -64,30 +64,33 @@ To start over: `docker compose down -v && docker compose up -d`
 
 ## Try it in two minutes
 
-Import `postman_collection.json` into Postman, or use curl. Run **Login**
-first; the collection saves the token for every other request.
+Import `postman_collection.json` into Postman. Run **Auth → Login** first. It
+saves the token, so every other request is authenticated from then on.
 
-```bash
-API=http://localhost:8001/api/v1
-TOKEN=$(curl -s -X POST $API/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"admin@pms.test","password":"password"}' | jq -r .data.token)
-AUTH="Authorization: Bearer $TOKEN"
-```
+Then open the **Walkthrough** folder and run it top to bottom. Each request
+saves the ids the next one needs, so you never copy an id by hand.
 
-| Step | Call | What you should see |
+| Step | Request | What you should see |
 |---|---|---|
-| 1 | `GET /inventory` | 7 items across three stages, each with its own quantity |
-| 2 | `GET /items/4/recipe` | what one Steel Rod needs |
-| 3 | `POST /production-orders` | order created, status `pending`, **stock has not moved** |
-| 4 | `POST /production-orders/{id}/execute` | now stock moves and a batch appears |
-| 5 | `GET /inventory` again | inputs went down, output went up |
-| 6 | `GET /batches/{id}/trace` | the full chain back to raw material |
-| 7 | `POST .../execute` again | **409**. An order runs once |
-| 8 | `POST /production-orders` with a huge quantity, then execute | **422** with the shortfall, and nothing written |
-| 9 | `GET /production-events` | a row that RabbitMQ delivered a moment ago |
+| 1 | Pick a raw material | 7 items across three stages, each with its own quantity |
+| 2 | Receive stock | a purchase batch, numbered like `RM-20260803-0001` |
+| 3 | Pick a semi finished product | the item the next order will produce |
+| 4 | Create a production order | status `pending`, and **stock has not moved yet** |
+| 5 | Execute it | now stock moves and an output batch appears |
+| 6 | Trace the batch back | the full chain down to the raw material |
+| 7 | Trace forward | everything made out of that batch |
+| 8 | Check the event log | a row that RabbitMQ delivered a moment ago |
 
-Steps 7 and 8 are the interesting ones. They are what stops the same order
-being run twice, and what stops production when stock is short.
+Two more requests sit in **Production orders**, and they are the interesting
+ones:
+
+- **Execute** the same order twice and the second call returns **409**. An
+  order runs once, whatever else happens.
+- **Execute (not enough stock)** returns **422** naming the item, the amount
+  needed, and the shortfall. Check inventory afterwards and nothing moved.
+
+The whole collection is safe to run twice. Ids are chained, SKUs are unique per
+run, and the failure cases build their own data.
 
 ---
 
@@ -247,27 +250,25 @@ The same five routes exist for `raw-materials`, `semi-finished-products` and
 
 ### Examples
 
-Receive raw material:
+Receive raw material. `POST /inventory/receipts`
 
-```bash
-curl -X POST $API/inventory/receipts -H "$AUTH" -H 'Content-Type: application/json' \
-  -d '{"item_id":1,"quantity":"500","note":"Delivery note 4471"}'
+```json
+{ "item_id": 1, "quantity": "500", "note": "Delivery note 4471" }
 ```
 
-Plan and run production:
+Plan a run. `POST /production-orders`
 
-```bash
-curl -X POST $API/production-orders -H "$AUTH" -H 'Content-Type: application/json' \
-  -d '{"output_item_id":4,"planned_quantity":"10"}'
-
-curl -X POST $API/production-orders/6/execute -H "$AUTH"
+```json
+{ "output_item_id": 4, "planned_quantity": "10" }
 ```
 
-Trace a finished batch:
+You never send the stage. It comes from the output item's type, so a semi
+finished output means a raw to semi run. Nothing has moved in inventory yet.
 
-```bash
-curl $API/batches/7/trace -H "$AUTH"
-```
+Then `POST /production-orders/6/execute` with no body at all. That is the call
+that moves the stock.
+
+Trace what came out. `GET /batches/7/trace`
 
 ```json
 {
@@ -418,9 +419,9 @@ You can see them in the RabbitMQ console at http://localhost:15672.
 docker compose stop worker
 ```
 
-Now run a production order. It completes, stock moves, the API returns 200.
-But `GET /production-events` shows nothing new, and the RabbitMQ console shows
-**Ready = 1** on `production.events.processing`.
+Now run **Walkthrough → Execute it** in Postman. It completes, stock moves, the
+API returns 200. But **Check the event log** shows nothing new, and the
+RabbitMQ console shows **Ready = 1** on `production.events.processing`.
 
 ```bash
 docker compose start worker
