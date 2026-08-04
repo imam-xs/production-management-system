@@ -1,21 +1,17 @@
 #!/usr/bin/env bash
-# ---------------------------------------------------------------------------
-# Container entrypoint for both roles of the backend image.
 #
-#   APP_ROLE=app     — prepares the application (deps, .env, key, migrations,
-#                      seeders), publishes a readiness marker, then runs Apache.
-#   APP_ROLE=worker  — waits for the marker, then runs the RabbitMQ consumer.
+# One image, two roles.
+#   app     prepares everything, then serves the API
+#   worker  waits for the app, then consumes the queue
 #
-# Only the "app" role mutates shared state, so two containers sharing the same
-# bind mount never race on `composer install` or `migrate`.
-# ---------------------------------------------------------------------------
+# Only the app role writes to the shared mount, so the two never race.
+#
 set -euo pipefail
 
 APP_ROLE="${APP_ROLE:-app}"
 READY_MARKER="storage/app/.pms-ready"
 
-# Topology names. Defaulted here because compose only passes the connection
-# details, and `set -u` would abort on an unset variable below.
+# Compose only passes connection details, and set -u aborts on anything unset.
 RABBITMQ_EXCHANGE="${RABBITMQ_EXCHANGE:-production.events}"
 RABBITMQ_QUEUE="${RABBITMQ_QUEUE:-production.events.processing}"
 RABBITMQ_DLX="${RABBITMQ_DLX:-production.events.dlx}"
@@ -41,7 +37,7 @@ wait_for_rabbitmq() {
 
 prepare_application() {
     if [ ! -f .env ]; then
-        log "no .env found — seeding it from .env.example"
+        log "no .env found, seeding it from .env.example"
         cp .env.example .env
     fi
 
@@ -57,15 +53,17 @@ prepare_application() {
 
     mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache
 
-    # Apache runs as www-data, but this script (and every `docker compose exec
-    # ... artisan` call) runs as root — so anything root creates here, notably
-    # storage/logs/laravel.log, becomes unwritable to the web server. Without
-    # this chown, the first runtime error turns into an unrelated "could not be
-    # opened in append mode" 500 that masks the actual exception.
+    # This script runs as root, Apache runs as www-data. Without the chown, the
+    # first error writes an unwritable laravel.log and returns a 500 that hides
+    # the real exception.
     chown -R www-data:www-data storage bootstrap/cache || true
     chmod -R ug+rwX storage bootstrap/cache || true
 
     wait_for_mysql
+
+    # Before the seeders, not after. They run real production orders, and a
+    # message published to an unbound exchange is dropped.
+    declare_rabbitmq_topology
 
     log "running migrations and seeders"
     php artisan migrate --seed --force
@@ -73,17 +71,12 @@ prepare_application() {
     php artisan config:clear
     php artisan route:clear
 
-    declare_rabbitmq_topology
-
     touch "$READY_MARKER"
     log "application ready"
 }
 
-# The queue driver declares the exchange on first publish but deliberately
-# leaves the queue and its bindings alone whenever an exchange is configured
-# (see RabbitMQQueue::declareDestination). Declaring them here keeps a fresh
-# `docker compose up` reproducible: topic exchange, one bound work queue, and a
-# dead-letter queue for messages the worker gives up on.
+# The queue driver declares the exchange but skips the queue and bindings when
+# an exchange is configured, so they are declared here instead.
 declare_rabbitmq_topology() {
     wait_for_rabbitmq
 
@@ -117,7 +110,7 @@ case "$APP_ROLE" in
         wait_for_rabbitmq
         ;;
     *)
-        log "unknown APP_ROLE '$APP_ROLE' — expected 'app' or 'worker'"
+        log "unknown APP_ROLE '$APP_ROLE', expected 'app' or 'worker'"
         exit 1
         ;;
 esac
