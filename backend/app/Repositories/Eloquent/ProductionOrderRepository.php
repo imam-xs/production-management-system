@@ -10,7 +10,6 @@ use App\Models\ProductionOrderModel;
 use App\Repositories\Contracts\ProductionOrderRepositoryInterface;
 use DateTimeInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class ProductionOrderRepository implements ProductionOrderRepositoryInterface
@@ -22,15 +21,26 @@ class ProductionOrderRepository implements ProductionOrderRepositoryInterface
         ?int $outputItemId = null,
         int $perPage = 15,
     ): LengthAwarePaginator {
-        return ProductionOrderModel::query()
-            ->with(['outputItem.unit', 'outputBatch', 'creator'])
-            ->when($stage instanceof ProductionStage, fn (Builder $q): Builder => $q->where('stage', $stage))
-            ->when($status instanceof ProductionOrderStatus, fn (Builder $q): Builder => $q->where('status', $status))
-            ->when($outputItemId !== null, fn (Builder $q): Builder => $q->where('output_item_id', $outputItemId))
-            ->when(
-                $search !== null && $search !== '',
-                fn (Builder $q): Builder => $q->where('order_number', 'like', "%{$search}%"),
-            )
+        $query = ProductionOrderModel::query()->with(['outputItem.unit', 'outputBatch', 'creator']);
+
+        if ($stage instanceof ProductionStage) {
+            $query->where('stage', $stage);
+        }
+
+        if ($status instanceof ProductionOrderStatus) {
+            $query->where('status', $status);
+        }
+
+        if ($outputItemId !== null) {
+            $query->where('output_item_id', $outputItemId);
+        }
+
+        if ($search !== null && $search !== '') {
+            $query->where('order_number', 'like', "%{$search}%");
+        }
+
+        // newest first; id breaks ties within the same second
+        return $query
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate($perPage);

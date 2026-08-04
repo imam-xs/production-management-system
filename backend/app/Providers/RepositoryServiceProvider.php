@@ -14,14 +14,7 @@ use App\Repositories\Eloquent\ItemRepository;
 use App\Repositories\Eloquent\ProductionOrderRepository;
 use Illuminate\Support\ServiceProvider;
 
-/**
- * The single place where abstractions meet implementations.
- *
- * Services type-hint the interfaces only, so swapping an implementation — a
- * caching decorator, an in-memory fake for tests — is a one-line change here and
- * nothing else in the application moves. That is the dependency-inversion half of
- * the design, made concrete.
- */
+// which class the container builds when a service asks for a repository interface
 class RepositoryServiceProvider extends ServiceProvider
 {
     /**
@@ -38,8 +31,8 @@ class RepositoryServiceProvider extends ServiceProvider
     public function register(): void
     {
         foreach (self::BINDINGS as $abstract => $concrete) {
-            // Singleton: repositories are stateless, so one instance per request
-            // is enough and avoids re-resolving them per injection point.
+            // singleton, not bind: repositories hold no state, so every class
+            // that asks for one in a request can safely share the same instance
             $this->app->singleton($abstract, $concrete);
         }
     }

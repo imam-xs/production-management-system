@@ -10,7 +10,6 @@ use App\Models\ItemModel;
 use App\Models\ItemStockModel;
 use App\Repositories\Contracts\InventoryRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,9 +17,13 @@ class InventoryRepository implements InventoryRepositoryInterface
 {
     public function stockLevels(?ItemType $type = null): Collection
     {
-        return ItemModel::query()
-            ->with(['unit', 'stock'])
-            ->when($type instanceof ItemType, fn (Builder $q): Builder => $q->where('type', $type))
+        $query = ItemModel::query()->with(['unit', 'stock']);
+
+        if ($type instanceof ItemType) {
+            $query->where('type', $type);
+        }
+
+        return $query
             ->orderBy('type')
             ->orderBy('name')
             ->get();

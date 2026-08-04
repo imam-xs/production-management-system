@@ -22,19 +22,32 @@ class BatchRepository implements BatchRepositoryInterface
         bool $availableOnly = false,
         int $perPage = 15,
     ): LengthAwarePaginator {
-        return BatchModel::query()
-            ->with(['item.unit', 'productionOrder'])
-            ->when($itemId !== null, fn (Builder $q): Builder => $q->where('item_id', $itemId))
-            ->when(
-                $itemType instanceof ItemType,
-                fn (Builder $q): Builder => $q->whereHas('item', fn (Builder $i): Builder => $i->where('type', $itemType)),
-            )
-            ->when($origin instanceof BatchOrigin, fn (Builder $q): Builder => $q->where('origin', $origin))
-            ->when($availableOnly, fn (Builder $q): Builder => $q->where('quantity_remaining', '>', 0))
-            ->when(
-                $search !== null && $search !== '',
-                fn (Builder $q): Builder => $q->where('batch_number', 'like', "%{$search}%"),
-            )
+        $query = BatchModel::query()->with(['item.unit', 'productionOrder']);
+
+        if ($itemId !== null) {
+            $query->where('item_id', $itemId);
+        }
+
+        // type lives on the item, not the batch, so the filter goes through the relation
+        if ($itemType instanceof ItemType) {
+            $query->whereHas('item', fn (Builder $i): Builder => $i->where('type', $itemType));
+        }
+
+        if ($origin instanceof BatchOrigin) {
+            $query->where('origin', $origin);
+        }
+
+        if ($availableOnly) {
+            $query->where('quantity_remaining', '>', 0);
+        }
+
+        if ($search !== null && $search !== '') {
+            $query->where('batch_number', 'like', "%{$search}%");
+        }
+
+        // newest first; id breaks ties so two batches made in the same second
+        // always come back in the same order
+        return $query
             ->orderByDesc('produced_at')
             ->orderByDesc('id')
             ->paginate($perPage);
@@ -86,11 +99,14 @@ class BatchRepository implements BatchRepositoryInterface
 
     public function countProducedOn(DateTimeInterface $date, ?ItemType $type = null): int
     {
-        return BatchModel::query()
-            ->when(
-                $type instanceof ItemType,
-                fn (Builder $q): Builder => $q->whereHas('item', fn (Builder $i): Builder => $i->where('type', $type)),
-            )
+        $query = BatchModel::query();
+
+        // scoped by type as well as date, so RM/SF/FG each get their own sequence
+        if ($type instanceof ItemType) {
+            $query->whereHas('item', fn (Builder $i): Builder => $i->where('type', $type));
+        }
+
+        return $query
             ->whereDate('produced_at', $date->format('Y-m-d'))
             ->count();
     }

@@ -34,16 +34,22 @@ class ItemRepository implements ItemRepositoryInterface
         string $sortDirection = 'asc',
         int $perPage = 15,
     ): LengthAwarePaginator {
-        return $this->readQuery()
-            ->where('type', $type)
-            ->when($isActive !== null, fn (Builder $q): Builder => $q->where('is_active', $isActive))
-            ->when(
-                $search !== null && $search !== '',
-                fn (Builder $q): Builder => $q->where(function (Builder $inner) use ($search): void {
-                    $inner->where('name', 'like', "%{$search}%")
-                        ->orWhere('sku', 'like', "%{$search}%");
-                }),
-            )
+        $query = $this->readQuery()->where('type', $type);
+
+        if ($isActive !== null) {
+            $query->where('is_active', $isActive);
+        }
+
+        // one search box, two columns: the inner grouping keeps the OR from
+        // swallowing the type filter above
+        if ($search !== null && $search !== '') {
+            $query->where(function (Builder $inner) use ($search): void {
+                $inner->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%");
+            });
+        }
+
+        return $query
             ->orderBy($this->sortColumn($sortBy), $this->sortDirection($sortDirection))
             ->paginate($perPage);
     }
@@ -102,9 +108,13 @@ class ItemRepository implements ItemRepositoryInterface
 
     public function lowStock(?ItemType $type = null): Collection
     {
-        return ItemModel::query()
-            ->with(['unit', 'stock'])
-            ->when($type instanceof ItemType, fn (Builder $q): Builder => $q->where('items.type', $type))
+        $query = ItemModel::query()->with(['unit', 'stock']);
+
+        if ($type instanceof ItemType) {
+            $query->where('items.type', $type);
+        }
+
+        return $query
             ->where('items.is_active', true)
             ->leftJoin('item_stocks', 'item_stocks.item_id', '=', 'items.id')
             ->whereRaw('COALESCE(item_stocks.quantity_on_hand, 0) <= items.reorder_level')
