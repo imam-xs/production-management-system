@@ -14,14 +14,12 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ProductionOrderRepository implements ProductionOrderRepositoryInterface
 {
-    public function paginate(
-        ?string $search = null,
-        ?ProductionStage $stage = null,
-        ?ProductionOrderStatus $status = null,
-        ?int $outputItemId = null,
-        int $perPage = 15,
-    ): LengthAwarePaginator {
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
         $query = ProductionOrderModel::query()->with(['outputItem.unit', 'outputBatch', 'creator']);
+
+        $stage = $filters['stage'] ?? null;
+        $status = $filters['status'] ?? null;
 
         if ($stage instanceof ProductionStage) {
             $query->where('stage', $stage);
@@ -29,14 +27,6 @@ class ProductionOrderRepository implements ProductionOrderRepositoryInterface
 
         if ($status instanceof ProductionOrderStatus) {
             $query->where('status', $status);
-        }
-
-        if ($outputItemId !== null) {
-            $query->where('output_item_id', $outputItemId);
-        }
-
-        if ($search !== null && $search !== '') {
-            $query->where('order_number', 'like', "%{$search}%");
         }
 
         // newest first; id breaks ties within the same second

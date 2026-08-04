@@ -26,13 +26,10 @@ class ProductionOrderController extends Controller
         $data = $request->validated();
 
         // query-string values are strings
-        $orders = $this->production->list(
-            search: $data['search'] ?? null,
-            stage: isset($data['stage']) ? ProductionStage::from($data['stage']) : null,
-            status: isset($data['status']) ? ProductionOrderStatus::from($data['status']) : null,
-            outputItemId: isset($data['output_item_id']) ? (int) $data['output_item_id'] : null,
-            perPage: (int) ($data['per_page'] ?? 15),
-        );
+        $orders = $this->production->list([
+            'stage' => isset($data['stage']) ? ProductionStage::from($data['stage']) : null,
+            'status' => isset($data['status']) ? ProductionOrderStatus::from($data['status']) : null,
+        ], perPage: (int) ($data['per_page'] ?? 15));
 
         return ProductionOrderResource::collection($orders);
     }

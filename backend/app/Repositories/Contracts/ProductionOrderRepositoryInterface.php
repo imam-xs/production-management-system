@@ -13,15 +13,10 @@ use Illuminate\Database\Eloquent\Collection;
 interface ProductionOrderRepositoryInterface
 {
     /**
+     * @param  array{stage?: ?ProductionStage, status?: ?ProductionOrderStatus}  $filters
      * @return LengthAwarePaginator<int, ProductionOrderModel>
      */
-    public function paginate(
-        ?string $search = null,
-        ?ProductionStage $stage = null,
-        ?ProductionOrderStatus $status = null,
-        ?int $outputItemId = null,
-        int $perPage = 15,
-    ): LengthAwarePaginator;
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator;
 
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException

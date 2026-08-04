@@ -14,19 +14,13 @@ use Illuminate\Database\Eloquent\Collection;
 
 class BatchRepository implements BatchRepositoryInterface
 {
-    public function paginate(
-        ?string $search = null,
-        ?int $itemId = null,
-        ?ItemType $itemType = null,
-        ?BatchOrigin $origin = null,
-        bool $availableOnly = false,
-        int $perPage = 15,
-    ): LengthAwarePaginator {
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
         $query = BatchModel::query()->with(['item.unit', 'productionOrder']);
 
-        if ($itemId !== null) {
-            $query->where('item_id', $itemId);
-        }
+        $itemType = $filters['item_type'] ?? null;
+        $origin = $filters['origin'] ?? null;
+        $search = $filters['search'] ?? null;
 
         // type lives on the item, not the batch, so the filter goes through the relation
         if ($itemType instanceof ItemType) {
@@ -37,7 +31,7 @@ class BatchRepository implements BatchRepositoryInterface
             $query->where('origin', $origin);
         }
 
-        if ($availableOnly) {
+        if (! empty($filters['available_only'])) {
             $query->where('quantity_remaining', '>', 0);
         }
 
@@ -68,8 +62,6 @@ class BatchRepository implements BatchRepositoryInterface
         return BatchModel::query()
             ->where('item_id', $itemId)
             ->where('quantity_remaining', '>', 0)
-            // Oldest stock leaves first; id breaks ties deterministically so the
-            // allocation plan is reproducible.
             ->orderBy('produced_at')
             ->orderBy('id')
             ->lockForUpdate()

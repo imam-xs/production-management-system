@@ -25,14 +25,12 @@ class BatchController extends Controller
 
         // explicit casts: query-string values are strings, so they are
         // converted here rather than relying on PHP's coercion
-        $batches = $this->batches->list(
-            search: $data['search'] ?? null,
-            itemId: isset($data['item_id']) ? (int) $data['item_id'] : null,
-            itemType: isset($data['item_type']) ? ItemType::from($data['item_type']) : null,
-            origin: isset($data['origin']) ? BatchOrigin::from($data['origin']) : null,
-            availableOnly: $request->boolean('available_only'),
-            perPage: (int) ($data['per_page'] ?? 15),
-        );
+        $batches = $this->batches->list([
+            'search' => $data['search'] ?? null,
+            'item_type' => isset($data['item_type']) ? ItemType::from($data['item_type']) : null,
+            'origin' => isset($data['origin']) ? BatchOrigin::from($data['origin']) : null,
+            'available_only' => $request->boolean('available_only'),
+        ], perPage: (int) ($data['per_page'] ?? 15));
 
         return BatchResource::collection($batches);
     }

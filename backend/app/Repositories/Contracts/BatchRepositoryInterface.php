@@ -12,17 +12,12 @@ use Illuminate\Database\Eloquent\Collection;
 interface BatchRepositoryInterface
 {
     /**
-     * @param  bool  $availableOnly  Only batches with stock left — the FIFO-relevant view.
+     * available_only narrows to batches that still hold stock — the FIFO view.
+     *
+     * @param  array{search?: ?string, item_type?: ?ItemType, origin?: ?BatchOrigin, available_only?: bool}  $filters
      * @return LengthAwarePaginator<int, BatchModel>
      */
-    public function paginate(
-        ?string $search = null,
-        ?int $itemId = null,
-        ?ItemType $itemType = null,
-        ?BatchOrigin $origin = null,
-        bool $availableOnly = false,
-        int $perPage = 15,
-    ): LengthAwarePaginator;
+    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator;
 
     /**
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException

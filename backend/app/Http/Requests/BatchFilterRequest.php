@@ -16,7 +16,6 @@ class BatchFilterRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:64'],
-            'item_id' => ['nullable', 'integer', 'exists:items,id'],
             'item_type' => ['nullable', Rule::in(ItemType::values())],
             'origin' => ['nullable', Rule::in(BatchOrigin::values())],
             'available_only' => ['nullable', 'boolean'],

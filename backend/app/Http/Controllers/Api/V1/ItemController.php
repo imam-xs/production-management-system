@@ -22,14 +22,10 @@ abstract class ItemController extends Controller
     {
         $data = $request->validated();
 
-        $paginated = $this->items->list(
-            $this->itemType(),
-            search: $data['search'] ?? null,
-            isActive: isset($data['is_active']) ? $request->boolean('is_active') : null,
-            sortBy: $data['sort_by'] ?? 'name',
-            sortDirection: $data['sort_direction'] ?? 'asc',
-            perPage: (int) ($data['per_page'] ?? 15),
-        );
+        $paginated = $this->items->list($this->itemType(), [
+            'search' => $data['search'] ?? null,
+            'is_active' => isset($data['is_active']) ? $request->boolean('is_active') : null,
+        ], perPage: (int) ($data['per_page'] ?? 15));
 
         return ItemResource::collection($paginated);
     }

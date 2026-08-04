@@ -24,15 +24,13 @@ class BatchService
     /**
      * @return LengthAwarePaginator<int, BatchModel>
      */
-    public function list(
-        ?string $search = null,
-        ?int $itemId = null,
-        ?ItemType $itemType = null,
-        ?BatchOrigin $origin = null,
-        bool $availableOnly = false,
-        int $perPage = 15,
-    ): LengthAwarePaginator {
-        return $this->batches->paginate($search, $itemId, $itemType, $origin, $availableOnly, $perPage);
+    /**
+     * @param  array{search?: ?string, item_type?: ?ItemType, origin?: ?BatchOrigin, available_only?: bool}  $filters
+     * @return LengthAwarePaginator<int, BatchModel>
+     */
+    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->batches->paginate($filters, $perPage);
     }
 
     /**

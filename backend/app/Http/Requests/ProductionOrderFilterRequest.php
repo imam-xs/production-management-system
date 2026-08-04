@@ -15,10 +15,8 @@ class ProductionOrderFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'search' => ['nullable', 'string', 'max:32'],
             'stage' => ['nullable', Rule::in(ProductionStage::values())],
             'status' => ['nullable', Rule::in(ProductionOrderStatus::values())],
-            'output_item_id' => ['nullable', 'integer', 'exists:items,id'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }

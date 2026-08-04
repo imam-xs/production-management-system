@@ -41,14 +41,13 @@ class ProductionService
     /**
      * @return LengthAwarePaginator<int, ProductionOrderModel>
      */
-    public function list(
-        ?string $search = null,
-        ?ProductionStage $stage = null,
-        ?ProductionOrderStatus $status = null,
-        ?int $outputItemId = null,
-        int $perPage = 15,
-    ): LengthAwarePaginator {
-        return $this->orders->paginate($search, $stage, $status, $outputItemId, $perPage);
+    /**
+     * @param  array{stage?: ?ProductionStage, status?: ?ProductionOrderStatus}  $filters
+     * @return LengthAwarePaginator<int, ProductionOrderModel>
+     */
+    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->orders->paginate($filters, $perPage);
     }
 
     public function findOrFail(int $id): ProductionOrderModel

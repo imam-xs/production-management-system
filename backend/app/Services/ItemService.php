@@ -30,15 +30,13 @@ class ItemService
     /**
      * @return LengthAwarePaginator<int, ItemModel>
      */
-    public function list(
-        ItemType $type,
-        ?string $search = null,
-        ?bool $isActive = null,
-        string $sortBy = 'name',
-        string $sortDirection = 'asc',
-        int $perPage = 15,
-    ): LengthAwarePaginator {
-        return $this->items->paginateByType($type, $search, $isActive, $sortBy, $sortDirection, $perPage);
+    /**
+     * @param  array{search?: ?string, is_active?: ?bool}  $filters
+     * @return LengthAwarePaginator<int, ItemModel>
+     */
+    public function list(ItemType $type, array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->items->paginateByType($type, $filters, $perPage);
     }
 
     /**

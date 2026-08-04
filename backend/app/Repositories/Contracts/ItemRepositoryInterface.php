@@ -10,16 +10,10 @@ use Illuminate\Database\Eloquent\Collection;
 interface ItemRepositoryInterface
 {
     /**
+     * @param  array{search?: ?string, is_active?: ?bool}  $filters
      * @return LengthAwarePaginator<int, ItemModel>
      */
-    public function paginateByType(
-        ItemType $type,
-        ?string $search = null,
-        ?bool $isActive = null,
-        string $sortBy = 'name',
-        string $sortDirection = 'asc',
-        int $perPage = 15,
-    ): LengthAwarePaginator;
+    public function paginateByType(ItemType $type, array $filters = [], int $perPage = 15): LengthAwarePaginator;
 
     /**
      * @return Collection<int, ItemModel>

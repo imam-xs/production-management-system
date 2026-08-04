@@ -12,11 +12,6 @@ use Illuminate\Database\Eloquent\Collection;
 class ItemRepository implements ItemRepositoryInterface
 {
     /**
-     * @var list<string>
-     */
-    private const SORTABLE = ['name', 'sku', 'created_at', 'reorder_level'];
-
-    /**
      * @return Builder<ItemModel>
      */
     private function readQuery(): Builder
@@ -26,15 +21,12 @@ class ItemRepository implements ItemRepositoryInterface
             ->withExists(['batches', 'billOfMaterials', 'usedIn']);
     }
 
-    public function paginateByType(
-        ItemType $type,
-        ?string $search = null,
-        ?bool $isActive = null,
-        string $sortBy = 'name',
-        string $sortDirection = 'asc',
-        int $perPage = 15,
-    ): LengthAwarePaginator {
+    public function paginateByType(ItemType $type, array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
         $query = $this->readQuery()->where('type', $type);
+
+        $isActive = $filters['is_active'] ?? null;
+        $search = $filters['search'] ?? null;
 
         if ($isActive !== null) {
             $query->where('is_active', $isActive);
@@ -49,19 +41,7 @@ class ItemRepository implements ItemRepositoryInterface
             });
         }
 
-        return $query
-            ->orderBy($this->sortColumn($sortBy), $this->sortDirection($sortDirection))
-            ->paginate($perPage);
-    }
-
-    private function sortColumn(string $requested): string
-    {
-        return in_array($requested, self::SORTABLE, true) ? $requested : 'name';
-    }
-
-    private function sortDirection(string $requested): string
-    {
-        return strtolower($requested) === 'desc' ? 'desc' : 'asc';
+        return $query->orderBy('name')->paginate($perPage);
     }
 
     public function allOfType(ItemType $type): Collection
