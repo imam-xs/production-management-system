@@ -561,7 +561,28 @@ You never send the stage. It is worked out from the output item's type, so a
 semi finished output means a raw to semi run. Ask for a raw material as output
 and you get **422**, because raw materials are bought, not made.
 
-**201**, with `status` at `"pending"` and `output_batch` still `null`.
+**201**
+
+```json
+{
+  "data": {
+    "id": 15,
+    "order_number": "PO-20260805-0008",
+    "stage": "raw_to_semi_finished",
+    "planned_quantity": "1.0000",
+    "produced_quantity": "0.0000",
+    "status": "pending",
+    "failure_reason": null,
+    "created_by": "Plant Administrator",
+    "completed_at": null,
+    "created_at": "2026-08-05T05:42:51+00:00"
+  }
+}
+```
+
+A pending order carries no `output_item`, `output_batch`, or `consumptions`
+key at all. Those appear once the order runs, because nothing has been produced
+or consumed yet. Fetch the order with GET to get them loaded.
 
 #### GET `/production-orders/{id}`
 
@@ -608,13 +629,16 @@ and you get **422**, because raw materials are bought, not made.
           }
         }
       }
-    ]
+    ],
+    "completed_at": "2026-08-04T19:02:09+00:00",
+    "created_at": "2026-08-04T19:02:09+00:00"
   }
 }
 ```
 
 `consumptions` is the traceability record. One row per input batch actually
-taken from, with the exact amount.
+taken from, with the exact amount. `completed_at` is null while the order is
+still pending.
 
 #### POST `/production-orders/{id}/execute`
 
@@ -1002,22 +1026,16 @@ still be consumed, so a component gets phased out instead of stranded.
 
 ---
 
-## Tooling
-
-```bash
-cd backend
-php vendor/bin/phpstan analyse --memory-limit=1G   # static analysis
-php vendor/bin/pint --test                         # code style
-```
-
-PHPStan runs at **level 6 with no baseline and no ignored errors**. Level 6
-means every parameter and return type must be declared, including what is
-inside an `array` or a `Collection`. That is why the docblocks carry things
-like `Collection<int, BatchModel>`.
+## Testing
 
 There is no automated test suite. The assignment's evaluation criteria do not
 list tests, so the time went into requirement coverage and the Docker path
-instead. Correctness was checked by driving the real HTTP API end to end.
+instead.
+
+Correctness was checked by driving the real HTTP API end to end, and
+`postman_collection.json` is that check made repeatable. Every request in it
+carries assertions, so importing it and hitting Run tells you in two minutes
+whether the whole thing works.
 
 ---
 
@@ -1033,7 +1051,6 @@ production-management-system/
 │   │   ├── migrations/
 │   │   └── seeders/            DemoProductionSeeder runs a real chain
 │   ├── docker-entrypoint.sh    waits for services, migrates, declares topology
-│   ├── phpstan.neon            level 6
 │   └── Dockerfile
 └── frontend/                   React admin UI
 ```
