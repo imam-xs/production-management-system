@@ -154,3 +154,9 @@ export function when(iso) {
   if (!iso) return '—'
   return new Date(iso).toLocaleString()
 }
+
+// date only, for places where the time of day carries no meaning
+export function day(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString()
+}

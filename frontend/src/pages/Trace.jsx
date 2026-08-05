@@ -1,48 +1,47 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api.js'
-import { Alert, Loading, Panel, Pill, qty, when } from '../components/ui.jsx'
+import { Alert, day, Loading, Panel, Pill, qty } from '../components/ui.jsx'
 
-// renders the recursive trace tree the API returns
-function TraceNode({ node, depth = 0 }) {
+// renders the recursive trace tree the API returns.
+// usedQuantity is how much of THIS batch the parent took, so it belongs on the
+// card itself rather than on a separate line above it
+function TraceNode({ node, depth = 0, usedQuantity = null }) {
+  const inputs = node.consumed ?? []
+  const isOrigin = node.origin === 'purchase'
+
   return (
     <div className={`tree-node ${depth === 0 ? 'root' : ''}`}>
-      <div className="tree-card">
+      <div className={`tree-card ${isOrigin && depth > 0 ? 'origin' : ''}`}>
         <div className="head">
+          {usedQuantity !== null && <span className="used">used {qty(usedQuantity)}</span>}
           <span className="mono"><strong>{node.batch_number}</strong></span>
           <Pill value={node.item?.type} />
           <Pill value={node.origin} />
         </div>
+
+        <div className="name">
+          {node.item?.name} <span className="mono muted">{node.item?.sku}</span>
+        </div>
+
         <div className="meta">
-          {node.item?.name} ({node.item?.sku}) · produced {qty(node.quantity_produced)} · remaining{' '}
-          {qty(node.quantity_remaining)} · {when(node.produced_at)}
+          {qty(node.quantity_produced)} produced, {qty(node.quantity_remaining)} still on hand
+          {' · '}{day(node.produced_at)}
           {node.production_order_number && (
-            <>
-              {' · order '}
-              <span className="mono">{node.production_order_number}</span>
-            </>
+            <>{' · '}<span className="mono">{node.production_order_number}</span></>
           )}
         </div>
       </div>
 
-      {node.consumed?.length > 0 && (
+      {inputs.length > 0 && (
         <>
-          <div className="consumed-label">consumed {node.consumed.length} input batch(es)</div>
-          {node.consumed.map((edge, i) => (
-            <div key={i}>
-              <div className="muted" style={{ fontSize: 12, marginLeft: 14 }}>
-                ↳ used <strong>{qty(edge.quantity_consumed)}</strong> of:
-              </div>
-              <TraceNode node={edge.batch} depth={depth + 1} />
-            </div>
+          <div className="consumed-label">
+            made from {inputs.length} {inputs.length === 1 ? 'batch' : 'batches'}
+          </div>
+          {inputs.map((edge, i) => (
+            <TraceNode key={i} node={edge.batch} depth={depth + 1} usedQuantity={edge.quantity_consumed} />
           ))}
         </>
-      )}
-
-      {node.origin === 'purchase' && depth > 0 && (
-        <div className="muted" style={{ fontSize: 12, marginLeft: 14, paddingBottom: 6 }}>
-          ● originating raw material, so the trace ends here
-        </div>
       )}
     </div>
   )
@@ -107,7 +106,10 @@ export default function Trace() {
                   </div>
                   <div className="meta">{downstream.item?.name}</div>
                 </div>
-                <div className="consumed-label">used in {downstream.used_in.length} production order(s)</div>
+                <div className="consumed-label">
+                  used in {downstream.used_in.length} production{' '}
+                  {downstream.used_in.length === 1 ? 'order' : 'orders'}
+                </div>
                 {downstream.used_in.map((u, i) => (
                   <div className="tree-node" key={i}>
                     <div className="tree-card">

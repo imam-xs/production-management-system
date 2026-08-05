@@ -336,7 +336,23 @@ input:focus, select:focus { outline: 2px solid rgba(37, 99, 235, 0.3); outline-o
   background: #fff;
 }
 .tree-card .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.tree-card .meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.tree-card .name { margin-top: 6px; font-size: 14px; }
+.tree-card .meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+/* how much of this batch the parent took: the number the eye should land on */
+.tree-card .used {
+  background: var(--bg);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* a purchase batch is where the trail stops, so it reads as a closed end */
+.tree-card.origin { background: #f8fafc; border-style: dashed; }
+
 .consumed-label { font-size: 11px; color: var(--muted); margin: 8px 0 2px; text-transform: uppercase; letter-spacing: 0.04em; }
 
 /* ---------- modal ---------- */
