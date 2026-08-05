@@ -7,16 +7,10 @@ use App\Models\ItemModel;
 use App\Models\UnitModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<ItemModel>
- */
 class ItemModelFactory extends Factory
 {
     protected $model = ItemModel::class;
 
-    /**
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [

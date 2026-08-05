@@ -8,16 +8,10 @@ use App\Models\ItemModel;
 use App\Models\ProductionOrderModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<ProductionOrderModel>
- */
 class ProductionOrderModelFactory extends Factory
 {
     protected $model = ProductionOrderModel::class;
 
-    /**
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [

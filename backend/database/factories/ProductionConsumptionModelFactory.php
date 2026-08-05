@@ -7,16 +7,10 @@ use App\Models\ProductionConsumptionModel;
 use App\Models\ProductionOrderModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<ProductionConsumptionModel>
- */
 class ProductionConsumptionModelFactory extends Factory
 {
     protected $model = ProductionConsumptionModel::class;
 
-    /**
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [

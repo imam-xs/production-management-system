@@ -7,21 +7,13 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<UserModel>
- */
 class UserModelFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
+    protected $model = UserModel::class;
+
+    // hashed once and reused, so a seed of many users does not pay for bcrypt each time
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [

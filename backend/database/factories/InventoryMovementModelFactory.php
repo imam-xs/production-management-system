@@ -8,16 +8,10 @@ use App\Models\InventoryMovementModel;
 use App\Models\ItemModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<InventoryMovementModel>
- */
 class InventoryMovementModelFactory extends Factory
 {
     protected $model = InventoryMovementModel::class;
 
-    /**
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         $quantity = $this->faker->randomFloat(4, 1, 500);

@@ -8,16 +8,10 @@ use App\Models\ItemModel;
 use App\Models\ProductionOrderModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<BatchModel>
- */
 class BatchModelFactory extends Factory
 {
     protected $model = BatchModel::class;
 
-    /**
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         $quantity = $this->faker->randomFloat(4, 10, 1000);

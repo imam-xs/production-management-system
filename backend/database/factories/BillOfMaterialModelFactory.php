@@ -6,16 +6,10 @@ use App\Models\BillOfMaterialModel;
 use App\Models\ItemModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<BillOfMaterialModel>
- */
 class BillOfMaterialModelFactory extends Factory
 {
     protected $model = BillOfMaterialModel::class;
 
-    /**
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
