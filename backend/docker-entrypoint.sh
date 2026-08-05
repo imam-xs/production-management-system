@@ -65,9 +65,6 @@ prepare_application() {
     php artisan config:clear
     php artisan route:clear
 
-    # Last, because everything above runs as root while Apache runs as
-    # www-data. The seeders log, so they create storage/logs/laravel.log owned
-    # by root; hand it over or the first request that logs dies with a 500.
     chown -R www-data:www-data storage bootstrap/cache || true
     chmod -R ug+rwX storage bootstrap/cache || true
 
