@@ -28,7 +28,6 @@ class ProductionEventLogModel extends Model
         'processed_at',
     ];
 
-    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -39,7 +38,6 @@ class ProductionEventLogModel extends Model
         ];
     }
 
-    /** @return BelongsTo<ProductionOrderModel, $this> */
     public function productionOrder(): BelongsTo
     {
         return $this->belongsTo(ProductionOrderModel::class);

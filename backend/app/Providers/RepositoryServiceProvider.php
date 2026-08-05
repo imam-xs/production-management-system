@@ -17,9 +17,6 @@ use Illuminate\Support\ServiceProvider;
 // which class the container builds when a service asks for a repository interface
 class RepositoryServiceProvider extends ServiceProvider
 {
-    /**
-     * @var array<class-string, class-string>
-     */
     private const BINDINGS = [
         ItemRepositoryInterface::class => ItemRepository::class,
         BatchRepositoryInterface::class => BatchRepository::class,

@@ -8,7 +8,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 // the response shapes this API commits to, in one place
 trait ResponseTrait
 {
-    /** @param array<string, mixed>|list<mixed> $data */
     protected function data(array $data, int $status = 200): JsonResponse
     {
         return response()->json(['data' => $data], $status);

@@ -36,7 +36,6 @@ class ItemModel extends Model
         'is_active',
     ];
 
-    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -46,62 +45,47 @@ class ItemModel extends Model
         ];
     }
 
-    /** @return BelongsTo<UnitModel, $this> */
     public function unit(): BelongsTo
     {
         return $this->belongsTo(UnitModel::class);
     }
 
-    /** @return HasOne<ItemStockModel, $this> */
     public function stock(): HasOne
     {
         return $this->hasOne(ItemStockModel::class, 'item_id');
     }
 
-    /** @return HasMany<BatchModel, $this> */
     public function batches(): HasMany
     {
         return $this->hasMany(BatchModel::class, 'item_id');
     }
 
-    /** @return HasMany<InventoryMovementModel, $this> */
     public function movements(): HasMany
     {
         return $this->hasMany(InventoryMovementModel::class, 'item_id');
     }
 
     // Recipe lines describing what this item is made of.
-    /** @return HasMany<BillOfMaterialModel, $this> */
     public function billOfMaterials(): HasMany
     {
         return $this->hasMany(BillOfMaterialModel::class, 'output_item_id');
     }
 
-    /** @return HasMany<BillOfMaterialModel, $this> */
     public function usedIn(): HasMany
     {
         return $this->hasMany(BillOfMaterialModel::class, 'input_item_id');
     }
 
-    /** @return HasMany<ProductionOrderModel, $this> */
     public function productionOrders(): HasMany
     {
         return $this->hasMany(ProductionOrderModel::class, 'output_item_id');
     }
 
-    /**
-     * @param  Builder<$this>  $query
-     * @return Builder<$this>
-     */
     public function scopeOfType(Builder $query, ItemType $type): Builder
     {
         return $query->where('type', $type);
     }
 
-    /**
-     * @param  Builder<$this>  $query
-     * @return Builder<$this>
-     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

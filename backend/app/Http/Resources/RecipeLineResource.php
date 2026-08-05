@@ -10,14 +10,12 @@ use Illuminate\Http\Resources\Json\JsonResource;
 // carries the input's current stock so the caller can show "needs 250, have 500"
 class RecipeLineResource extends JsonResource
 {
-    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         $input = $this->resource->inputItem;
 
         // Larastan types the HasOne as non-nullable; at runtime the stock row
         // does not exist until the item's first movement.
-        /** @var ItemStockModel|null $stock */
         $stock = $input->stock;
 
         return [

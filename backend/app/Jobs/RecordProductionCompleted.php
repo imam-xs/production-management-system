@@ -16,9 +16,6 @@ class RecordProductionCompleted implements ShouldQueue
 
     public int $tries = 3;
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     public function __construct(
         public readonly string $eventId,
         public readonly string $routingKey,

@@ -9,9 +9,6 @@ use Illuminate\Validation\Rule;
 
 class BatchFilterRequest extends FormRequest
 {
-    /**
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
         return [

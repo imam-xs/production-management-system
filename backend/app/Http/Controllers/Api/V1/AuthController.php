@@ -17,7 +17,6 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
 
-        /** @var UserModel|null $user */
         $user = UserModel::query()->where('email', $credentials['email'])->first();
 
         if ($user === null || ! Hash::check($credentials['password'], $user->password)) {

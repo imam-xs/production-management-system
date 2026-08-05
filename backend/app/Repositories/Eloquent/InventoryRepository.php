@@ -41,7 +41,6 @@ class InventoryRepository implements InventoryRepositoryInterface
     {
         $this->stockFor($item);
 
-        /** @var ItemStockModel $locked */
         $locked = ItemStockModel::query()
             ->where('item_id', $item->id)
             ->lockForUpdate()

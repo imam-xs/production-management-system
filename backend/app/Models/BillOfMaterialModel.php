@@ -22,7 +22,6 @@ class BillOfMaterialModel extends Model
         'quantity_per_unit',
     ];
 
-    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -30,13 +29,11 @@ class BillOfMaterialModel extends Model
         ];
     }
 
-    /** @return BelongsTo<ItemModel, $this> */
     public function outputItem(): BelongsTo
     {
         return $this->belongsTo(ItemModel::class, 'output_item_id');
     }
 
-    /** @return BelongsTo<ItemModel, $this> */
     public function inputItem(): BelongsTo
     {
         return $this->belongsTo(ItemModel::class, 'input_item_id');

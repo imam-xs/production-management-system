@@ -8,7 +8,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class ItemResource extends JsonResource
 {
-    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         // null until the item's first movement, so "no stock yet" reads as zero

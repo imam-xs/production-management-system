@@ -14,9 +14,6 @@ use Illuminate\Database\Eloquent\Model;
 
 interface InventoryRepositoryInterface
 {
-    /**
-     * @return Collection<int, ItemModel>
-     */
     public function stockLevels(?ItemType $type = null): Collection;
 
     public function stockFor(ItemModel $item): ItemStockModel;
@@ -36,8 +33,5 @@ interface InventoryRepositoryInterface
         ?string $note = null,
     ): InventoryMovementModel;
 
-    /**
-     * @return LengthAwarePaginator<int, InventoryMovementModel>
-     */
     public function paginateMovements(ItemModel $item, int $perPage = 15): LengthAwarePaginator;
 }

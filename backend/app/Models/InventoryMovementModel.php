@@ -32,7 +32,6 @@ class InventoryMovementModel extends Model
         'note',
     ];
 
-    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -42,19 +41,16 @@ class InventoryMovementModel extends Model
         ];
     }
 
-    /** @return BelongsTo<ItemModel, $this> */
     public function item(): BelongsTo
     {
         return $this->belongsTo(ItemModel::class)->withTrashed();
     }
 
-    /** @return BelongsTo<BatchModel, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(BatchModel::class);
     }
 
-    /** @return MorphTo<Model, $this> */
     public function reference(): MorphTo
     {
         return $this->morphTo();

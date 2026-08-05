@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\BatchOrigin;
-use App\Enums\ItemType;
 use App\Models\BatchModel;
 use App\Models\ItemModel;
 use App\Models\ProductionOrderModel;
@@ -21,10 +20,6 @@ class BatchService
         private readonly BatchRepositoryInterface $batches,
     ) {}
 
-    /**
-     * @param  array{search?: ?string, item_type?: ?ItemType, origin?: ?BatchOrigin, available_only?: bool}  $filters
-     * @return LengthAwarePaginator<int, BatchModel>
-     */
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return $this->batches->paginate($filters, $perPage);

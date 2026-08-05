@@ -38,10 +38,6 @@ class ProductionService
         private readonly BatchService $batchService,
     ) {}
 
-    /**
-     * @param  array{stage?: ?ProductionStage, status?: ?ProductionOrderStatus}  $filters
-     * @return LengthAwarePaginator<int, ProductionOrderModel>
-     */
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return $this->orders->paginate($filters, $perPage);
@@ -53,7 +49,6 @@ class ProductionService
     }
 
     // the log the RabbitMQ consumer writes
-    /** @return LengthAwarePaginator<int, ProductionEventLogModel> */
     public function eventLog(int $perPage = 15): LengthAwarePaginator
     {
         return ProductionEventLogModel::query()
@@ -105,6 +100,10 @@ class ProductionService
                     'stage' => $stage,
                     'output_item_id' => $outputItem->id,
                     'planned_quantity' => $plannedQuantity,
+                    // set here rather than left to the column default, so the
+                    // model returned from create() reads the same as one loaded
+                    // back from the database
+                    'produced_quantity' => '0',
                     'status' => ProductionOrderStatus::Pending,
                     'created_by' => $createdBy?->id,
                 ]);
@@ -171,7 +170,6 @@ class ProductionService
     }
 
     // plan which batches will supply each input — nothing is written yet
-    /** @return list<array{item: ItemModel, plan: list<array{batch: BatchModel, quantity: string}>}> */
     private function allocateInputs(ProductionOrderModel $order, ItemModel $outputItem): array
     {
         $allocations = [];
@@ -189,7 +187,6 @@ class ProductionService
     }
 
     // Consume the allocated inputs.
-    /** @param  list<array{item: ItemModel, plan: list<array{batch: BatchModel, quantity: string}>}>  $allocations */
     private function consumeInputs(ProductionOrderModel $order, array $allocations): void
     {
         foreach ($allocations as $allocation) {
@@ -227,7 +224,6 @@ class ProductionService
     }
 
     // deduct one input's planned quantity from its batches, recording a consumption edge and a ledger row for each.
-    /** @param  list<array{batch: BatchModel, quantity: string}>  $plan */
     private function consumeAllocation(ProductionOrderModel $order, ItemModel $inputItem, array $plan): void
     {
         $stock = $this->inventory->lockStockFor($inputItem);

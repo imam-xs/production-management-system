@@ -35,9 +35,6 @@ abstract class ItemController extends Controller
         return new ItemResource($this->items->findOrFail($id, $this->itemType()));
     }
 
-    /**
-     * @param  array<string, mixed>  $validated
-     */
     protected function doStore(array $validated): JsonResponse
     {
         $item = $this->items->create($this->itemType(), $validated);
@@ -45,9 +42,6 @@ abstract class ItemController extends Controller
         return $this->created(new ItemResource($item));
     }
 
-    /**
-     * @param  array<string, mixed>  $validated
-     */
     protected function doUpdate(int $id, array $validated): ItemResource
     {
         $item = $this->items->findOrFail($id, $this->itemType());

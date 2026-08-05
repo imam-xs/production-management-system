@@ -10,7 +10,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 // appear, reading as zero
 class InventoryStockResource extends JsonResource
 {
-    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         // null until the item's first movement

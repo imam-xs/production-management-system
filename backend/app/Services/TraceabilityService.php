@@ -14,7 +14,6 @@ class TraceabilityService
         private readonly ProductionOrderRepositoryInterface $orders,
     ) {}
 
-    /** @return array<string, mixed> */
     public function traceUpstream(BatchModel $batch, int $depth = 0): array
     {
         $node = $this->batchNode($batch);
@@ -37,7 +36,6 @@ class TraceabilityService
         return $node;
     }
 
-    /** @return array<string, mixed> */
     public function traceDownstream(BatchModel $batch, int $depth = 0): array
     {
         $node = $this->batchNode($batch);
@@ -61,7 +59,6 @@ class TraceabilityService
         return $node;
     }
 
-    /** @return array<string, mixed> */
     private function batchNode(BatchModel $batch): array
     {
         return [

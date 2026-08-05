@@ -7,9 +7,6 @@ use Illuminate\Validation\Rule;
 
 class UpdateItemRequest extends FormRequest
 {
-    /**
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
         return [

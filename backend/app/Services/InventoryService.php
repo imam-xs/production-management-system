@@ -6,7 +6,6 @@ use App\Enums\BatchOrigin;
 use App\Enums\ItemType;
 use App\Enums\MovementType;
 use App\Models\BatchModel;
-use App\Models\InventoryMovementModel;
 use App\Models\ItemModel;
 use App\Models\ItemStockModel;
 use App\Repositories\Contracts\InventoryRepositoryInterface;
@@ -66,7 +65,6 @@ class InventoryService
         });
     }
 
-    /** @return Collection<int, ItemModel> */
     public function stockLevels(?ItemType $type = null): Collection
     {
         return $this->inventory->stockLevels($type);
@@ -77,7 +75,6 @@ class InventoryService
         return $this->inventory->stockFor($item);
     }
 
-    /** @return LengthAwarePaginator<int, InventoryMovementModel> */
     public function movementsFor(ItemModel $item, int $perPage = 15): LengthAwarePaginator
     {
         return $this->inventory->paginateMovements($item, $perPage);

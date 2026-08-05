@@ -9,7 +9,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 // enough to identify it, without ItemResource's stock lookup
 class ItemSummaryResource extends JsonResource
 {
-    /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
         return [

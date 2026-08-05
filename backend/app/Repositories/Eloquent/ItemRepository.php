@@ -11,9 +11,6 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ItemRepository implements ItemRepositoryInterface
 {
-    /**
-     * @return Builder<ItemModel>
-     */
     private function readQuery(): Builder
     {
         return ItemModel::query()

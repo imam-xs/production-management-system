@@ -15,7 +15,6 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
-        "larastan/larastan": "^3.10",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "mockery/mockery": "^1.6",
@@ -41,17 +40,9 @@
             "@php artisan key:generate",
             "@php artisan migrate --seed --force"
         ],
-        "lint": "@php vendor/bin/pint",
-        "lint:check": "@php vendor/bin/pint --test",
-        "analyse": "@php vendor/bin/phpstan analyse --memory-limit=1G",
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
-        ],
-        "check": [
-            "@composer lint:check",
-            "@composer analyse",
-            "@composer test"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

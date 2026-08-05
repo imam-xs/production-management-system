@@ -23,7 +23,6 @@ class ItemStockModel extends Model
         'quantity_on_hand',
     ];
 
-    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -32,7 +31,6 @@ class ItemStockModel extends Model
         ];
     }
 
-    /** @return BelongsTo<ItemModel, $this> */
     public function item(): BelongsTo
     {
         return $this->belongsTo(ItemModel::class);

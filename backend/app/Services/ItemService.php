@@ -19,29 +19,16 @@ class ItemService
         private readonly BillOfMaterialRepositoryInterface $boms,
     ) {}
 
-    /**
-     * @return LengthAwarePaginator<int, ItemModel>
-     */
-    /**
-     * @param  array{search?: ?string, is_active?: ?bool}  $filters
-     * @return LengthAwarePaginator<int, ItemModel>
-     */
     public function list(ItemType $type, array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return $this->items->paginateByType($type, $filters, $perPage);
     }
 
-    /**
-     * @return Collection<int, ItemModel>
-     */
     public function allOfType(ItemType $type): Collection
     {
         return $this->items->allOfType($type);
     }
 
-    /**
-     * @throws ModelNotFoundException
-     */
     public function findOrFail(int $id, ItemType $type): ItemModel
     {
         $item = $this->items->findByIdAndType($id, $type);
@@ -53,9 +40,6 @@ class ItemService
         return $item;
     }
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
     public function create(ItemType $type, array $attributes): ItemModel
     {
         // $type wins regardless of what $attributes contains — a raw-material
@@ -63,9 +47,6 @@ class ItemService
         return $this->items->create([...$attributes, 'type' => $type]);
     }
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
     public function update(ItemModel $item, array $attributes): ItemModel
     {
         // type is immutable after creation: changing it would orphan the
@@ -94,9 +75,6 @@ class ItemService
         $this->items->delete($item);
     }
 
-    /**
-     * @return Collection<int, ItemModel>
-     */
     public function lowStock(?ItemType $type = null): Collection
     {
         return $this->items->lowStock($type);

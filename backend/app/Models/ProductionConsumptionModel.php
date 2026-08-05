@@ -21,7 +21,6 @@ class ProductionConsumptionModel extends Model
         'quantity_consumed',
     ];
 
-    /** @return array<string, string> */
     protected function casts(): array
     {
         return [
@@ -29,13 +28,11 @@ class ProductionConsumptionModel extends Model
         ];
     }
 
-    /** @return BelongsTo<ProductionOrderModel, $this> */
     public function productionOrder(): BelongsTo
     {
         return $this->belongsTo(ProductionOrderModel::class);
     }
 
-    /** @return BelongsTo<BatchModel, $this> */
     public function inputBatch(): BelongsTo
     {
         return $this->belongsTo(BatchModel::class, 'input_batch_id');

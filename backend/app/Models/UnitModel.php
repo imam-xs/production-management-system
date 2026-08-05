@@ -19,7 +19,6 @@ class UnitModel extends Model
         'name',
     ];
 
-    /** @return HasMany<ItemModel, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(ItemModel::class, 'unit_id');
